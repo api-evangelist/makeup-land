@@ -1,0 +1,122 @@
+generated: '2026-09-19'
+method: searched
+format: custom-json-envelope
+source: >-
+  Derived from the 4xx/5xx responses in openapi/makeup-land-openapi.yml (every error response shares one
+  inline Error schema whose error_code enum has 21 values) and enriched from the provider's own error
+  tables in https://makeup.land/auth.md ("Errors") and https://makeup.land/llms-full.txt ("Error envelope"),
+  plus three live unauthenticated responses observed 2026-09-19 (400 on GET /api/v1/products with no
+  filter, 401 on GET /api/v1/brands, 404 on GET /api/v1/does-not-exist).
+envelope:
+  media_type: application/json
+  rfc9457: false
+  shape: '{ "error": string (human-readable, en or he, copy may shift), "error_code": enum (stable machine contract), ...situational extras }'
+  stable_field: error_code
+  extras:
+  - insufficient_stock adds available + requested
+  - insufficient_credits adds available_cents + requested_cents
+  - validation_failed adds row_errors[]
+  - endpoint_not_found adds path, method and a discovery block (openapi, handbook, mcp, agent_card URLs)
+  note: >-
+    error_code is declared "Optional today (legacy callers depend on the error string field); will become
+    required in the next API version." Live 400 and 401 responses observed on 2026-09-19 carried ONLY the
+    error string ({"error":"Unauthorized"}), while the live 404 carried error_code. Agents should branch on
+    error_code when present and fall back to HTTP status.
+  mcp: Tool errors propagate the same envelope as text content with isError true.
+problems:
+- status: 400
+  code: invalid_json
+  title: Malformed JSON body
+  remediation: Fix the request body; do not retry unchanged.
+- status: 400
+  code: invalid_quantity
+  title: Invalid quantity
+  source_operations: [addCartItem, patchCartItem]
+- status: 400
+  code: invalid_phone
+  title: Phone is not E.164
+  remediation: Send +<country><number> (pattern ^\+\d{6,15}$), URL-encoded as %2B in query strings.
+- status: 400
+  code: invalid_parameter
+  title: Invalid or missing parameter
+  note: Observed live — GET /api/v1/products with no filter returns 400 "Provide at least one of q, tag, brand, near_hex, or sort=popularity|rating" (error_code absent on that response).
+- status: 400
+  code: product_unavailable
+  title: Product unavailable
+  source_operations: [addCartItem, patchCartItem]
+- status: 400
+  code: variant_mismatch
+  title: Variant does not belong to product
+  source_operations: [addCartItem, patchCartItem]
+- status: 400
+  code: tender_unavailable
+  title: Tender not available for this variant
+  remediation: The variant has no credit_price (ILS-only) or vice versa; switch tender.
+  source_operations: [addCartItem, patchCartItem]
+- status: 401
+  code: unauthorized
+  title: Bearer missing, malformed or revoked
+  remediation: Stop calling; treat the credential as invalid; do not auto-retry. Request a fresh token by email (auth.md). Observed live as {"error":"Unauthorized"}.
+- status: 403
+  code: scope_mismatch
+  title: Token scope does not permit this endpoint
+  remediation: Request a wider-scope token (scopes full / register / giftcards / proposals).
+- status: 403
+  code: read_only_token
+  title: Token has read_only=true
+  remediation: Request a writable token; applies to every POST/PATCH/DELETE.
+  source_operations: [upsertCustomer, patchCustomerTags, addCartItem, patchCartItem, deleteCartItem, clearCart, redeemGiftCard, registerCustomer, submitProposals]
+- status: 404
+  code: customer_not_found
+  title: Phone does not match a customer
+  remediation: Do not retry with the same phone.
+  source_operations: [getCustomer, getCart, clearCart, listGiftCards, listPaymentLinks, getCustomerBestDeals, listCustomerOpportunities]
+- status: 404
+  code: line_item_not_found
+  title: Cart line not found
+  source_operations: [patchCartItem, deleteCartItem]
+- status: 404
+  code: registration_not_found
+  title: Registration not found
+  source_operations: [getRegistration]
+- status: 404
+  code: endpoint_not_found
+  title: No V1 endpoint at this path
+  note: Observed live; the body includes a discovery block pointing at openapi.json, llms-full.txt, mcp.json and the agent card.
+- status: 409
+  code: insufficient_stock
+  title: Requested quantity exceeds available stock
+  remediation: Read available and requested and adjust quantity.
+  source_operations: [addCartItem, patchCartItem]
+- status: 409
+  code: insufficient_credits
+  title: Wallet balance below credit price
+  remediation: Drop the line to ILS tender or top up; read available_cents / requested_cents.
+  source_operations: [addCartItem, patchCartItem]
+- status: 409
+  code: line_collision
+  title: A cart line for this variant/tender already exists
+  source_operations: [patchCartItem]
+- status: 409
+  code: phone_conflict
+  title: Phone conflicts with an existing customer
+  source_operations: [upsertCustomer, registerCustomer]
+- status: 413
+  code: null
+  title: Batch exceeds 200 rows
+  source_operations: [submitProposals]
+  note: Status documented in the spec; no error_code value is named for it.
+- status: 422
+  code: validation_failed
+  title: Per-row validation errors
+  remediation: Inspect the row_errors array.
+  source_operations: [submitProposals]
+- status: 429
+  code: rate_limited
+  title: Rate limit exceeded
+  remediation: Honour Retry-After; slow down or request a higher quota. Limits are 60/min per token or per IP on the endpoints that declare a 429 — see rate-limits/makeup-land-rate-limits.yml.
+  source_operations: [listCustomerOpportunities, getCustomerBestDeals, validateGiftCard, registerCustomer]
+- status: 500
+  code: internal_error
+  title: Server error
+  remediation: Retry with exponential backoff; include Idempotency-Key on mutations to avoid duplicates.

@@ -1,0 +1,123 @@
+{
+  "protocolVersion": "2025-06-18",
+  "name": "makeup.land",
+  "description": "Israeli professional cosmetics retailer. REST API exposes the product catalog (with ΔE shade matching), customer wallet, cart, orders, gift cards, and registration. Bearer auth with scoped tokens; phone-keyed endpoints for cart and payment links.",
+  "vendor": {
+    "name": "א. ט. הפקות בע״מ / A.T. Hafakot Ltd.",
+    "url": "https://makeup.land"
+  },
+  "transport": "http",
+  "endpoints": {
+    "mcp": "https://makeup.land/api/mcp",
+    "openapi": "https://makeup.land/openapi.json",
+    "auth": "https://makeup.land/auth.md",
+    "handbook": "https://makeup.land/llms-full.txt",
+    "base_url": "https://makeup.land/api/v1"
+  },
+  "authentication": {
+    "type": "bearer",
+    "scheme": "Bearer ml_<hex>",
+    "discovery": "https://makeup.land/.well-known/oauth-protected-resource",
+    "request_token_via": "mailto:shop@makeup.land"
+  },
+  "tools": [
+    {
+      "name": "listProducts",
+      "description": "List products with filters: tag, brand, near_hex (ΔE shade match), hue_family, sort (price/popularity/rating/relevance). Returns ILS + ℳ-credit prices, swatches, ratings. Anonymous for catalog browse; bearer becomes required when passing phone=, include=inventory, or relevant_to_phone= (PII-keyed projections).",
+      "method": "GET",
+      "path": "/api/v1/products",
+      "requires_auth": false
+    },
+    {
+      "name": "listBrands",
+      "description": "List all brands with product counts and slugs. Bearer required.",
+      "method": "GET",
+      "path": "/api/v1/brands",
+      "requires_auth": true
+    },
+    {
+      "name": "getCustomer",
+      "description": "Lookup a customer by phone (E.164). Returns tags, ℳ-credit balance, M Club tier. Bearer required.",
+      "method": "GET",
+      "path": "/api/v1/customers",
+      "requires_auth": true
+    },
+    {
+      "name": "getCart",
+      "description": "Fetch a customer's most-recent cart by phone. Includes per-line and total reward projection. Bearer + phone are BOTH required: bearer authenticates the caller, phone selects the customer.",
+      "method": "GET",
+      "path": "/api/v1/cart",
+      "requires_auth": true
+    },
+    {
+      "name": "addCartItem",
+      "description": "Add a product/variant to the customer's cart. Idempotent via Idempotency-Key. Stock-gated; credits-tender items wallet- gated. Bearer + phone (phone in body for POST).",
+      "method": "POST",
+      "path": "/api/v1/cart/items",
+      "requires_auth": true
+    },
+    {
+      "name": "listOrders",
+      "description": "List a customer's recent orders with payment status. Bearer required.",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "requires_auth": true
+    },
+    {
+      "name": "validateGiftCard",
+      "description": "Public endpoint — check a gift card's remaining balance without revealing the full code. Gated on knowledge of the code itself; no bearer required.",
+      "method": "GET",
+      "path": "/api/v1/gift-cards/validate",
+      "requires_auth": false
+    },
+    {
+      "name": "registerCustomer",
+      "description": "Generic registration orchestrator — create or look up a customer, compute tags, fire WhatsApp template + partner webhooks. Scope: register.",
+      "method": "POST",
+      "path": "/api/v1/register",
+      "requires_auth": true
+    }
+  ],
+  "links": [
+    {
+      "rel": "service-desc",
+      "href": "https://makeup.land/openapi.json",
+      "type": "application/openapi+json"
+    },
+    {
+      "rel": "service-desc",
+      "href": "https://makeup.land/openapi.yaml",
+      "type": "application/yaml"
+    },
+    {
+      "rel": "describedby",
+      "href": "https://makeup.land/llms-full.txt",
+      "type": "text/plain"
+    },
+    {
+      "rel": "describedby",
+      "href": "https://makeup.land/llms.txt",
+      "type": "text/plain"
+    },
+    {
+      "rel": "authentication",
+      "href": "https://makeup.land/auth.md",
+      "type": "text/markdown"
+    },
+    {
+      "rel": "oauth-protected-resource",
+      "href": "https://makeup.land/.well-known/oauth-protected-resource",
+      "type": "application/json"
+    },
+    {
+      "rel": "oauth-authorization-server",
+      "href": "https://makeup.land/.well-known/oauth-authorization-server",
+      "type": "application/json"
+    },
+    {
+      "rel": "agent-card",
+      "href": "https://makeup.land/.well-known/agent-card.json",
+      "type": "application/json"
+    }
+  ]
+}

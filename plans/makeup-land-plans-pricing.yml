@@ -1,0 +1,32 @@
+generated: '2026-09-19'
+method: searched
+source: https://makeup.land/pricing.md
+plan_count: 1
+currency: ILS
+model: >-
+  makeup.land is a B2C cosmetics retailer; there is no subscription product and no paid API tier. API access,
+  the public catalog feeds and the partner-registration webhook proxy are all free; tokens are issued by
+  email against a stated use case. pricing.md exists so agents can answer "what does X cost" about products,
+  the ℳ-credit wallet, shipping and refunds — those are retail prices, not API plans, and are summarised
+  below as context rather than as tiers.
+plans:
+- id: api-access
+  name: API access
+  price: 0
+  currency: ILS
+  period: null
+  description: Free bearer token with a scope (full / register / giftcards / proposals) and optional read_only flag, issued by email.
+  how_to_obtain: Write to info@makeup.land (auth.md) or shop@makeup.land (llms-api.txt, README) describing the use case and the scope needed.
+  included:
+  - REST API v1 (21 operations) subject to the per-endpoint limits in rate-limits/
+  - MCP server at https://makeup.land/api/mcp (catalog tools anonymous; customer tools with the same bearer)
+  - Read-only catalog feeds without any token — Google Merchant RSS, OpenAI ACP JSONL, product reviews
+  - Webhook proxy for partner registrations, issued alongside a register-scoped token
+  limits: Rate limits are per endpoint (60/min per token or per IP where declared); there is no paid tier that raises them.
+  source: https://makeup.land/pricing.md#5-api-access
+retail_context:
+  currency: ILS (₪), VAT-inclusive; per-SKU range roughly ₪10 – ₪800
+  alternative_tender: ℳ-credits (loyalty wallet, agorot; ℳ1 = ₪1 at redemption; default earn 5% of the ILS leg, PRO 10%, PRO+ 12%)
+  shipping: Self-pickup ₪0; internal courier ₪25–35; UPS home ₪35–55; UPS pickup point ₪25–45; COD +₪10 (pricing.md). The FAQ page states ₪39 with free shipping over ₪150.
+  refunds: Card refunds to the original instrument in 5–10 business days; ℳ-credit refunds instant; gift-card refunds restore the card balance.
+  source: https://makeup.land/pricing.md

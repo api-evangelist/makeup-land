@@ -1,0 +1,245 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List / search products",
+        "description": "Browse the catalog with tag, brand, near_hex (ΔE shade match), hue_family, and sort filters. Bearer becomes required when passing `phone` (rewards projection).",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "q": {
+              "description": "Natural-language query. Cross-lingual semantic search — `lipstick`, `שפתון`, `lápiz labial` each return Hebrew-tagged lipsticks (the sets may differ across languages but are semantically equivalent). Prefer this over `tag` for any category lookup that isn't already in exact Hebrew.",
+              "type": "string"
+            },
+            "tag": {
+              "description": "Filter by an EXACT tag string (case-insensitive, whitespace-trimmed; no translation, no substring). Tags are Hebrew (e.g. שפתון, ביוטי, עיניים, שפתיים). English category names rarely match — use `q` instead for natural-language queries.",
+              "type": "string"
+            },
+            "brand": {
+              "description": "Filter by brand slug or name.",
+              "type": "string"
+            },
+            "near_hex": {
+              "description": "Target hex color for ΔE-ranked shade matching. Examples: '#C2185B', 'E8D4B8'. Each returned product carries a `shade_match: {hex, delta_e}` field with the closest variant swatch and its perceptual distance.",
+              "type": "string",
+              "pattern": "^#?[0-9A-Fa-f]{6}$"
+            },
+            "hue_family": {
+              "description": "Post-filter on hue family. Must be paired with another filter.",
+              "type": "string",
+              "enum": [
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "purple",
+                "pink",
+                "brown",
+                "neutral"
+              ]
+            },
+            "sort": {
+              "description": "Sort order. Default: relevance.",
+              "type": "string",
+              "enum": [
+                "price_asc",
+                "price_desc",
+                "popularity",
+                "rating",
+                "relevance"
+              ]
+            },
+            "limit": {
+              "description": "Page size, default 20.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "page": {
+              "description": "1-indexed page number.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "phone": {
+              "description": "E.164 phone for per-customer rewards projection. REQUIRES bearer auth. Omit for anonymous catalog browse.",
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$"
+            }
+          }
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_brands",
+        "title": "List all brands",
+        "description": "Return every brand with product counts and slugs. Bearer required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "validate_gift_card",
+        "title": "Validate a gift card code",
+        "description": "Check a gift card's remaining balance using its code. Public endpoint — no bearer required (gated on knowledge of the code).",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Gift card code (full string as printed on the card)."
+            }
+          },
+          "required": [
+            "code"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_customer",
+        "title": "Lookup customer by phone",
+        "description": "Return tags, ℳ-credit balance, M Club tier for the customer with the given E.164 phone. Bearer required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$",
+              "description": "E.164 phone number, e.g. +972501234567."
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_cart",
+        "title": "Fetch a customer's cart",
+        "description": "Return the customer's most-recently-updated cart with per-line and total reward projection. Bearer + phone required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$",
+              "description": "E.164 phone selecting the customer whose cart to return."
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_orders",
+        "title": "List a customer's orders",
+        "description": "Recent orders with 6-axis status (order / payment / fulfillment / delivery / return / review). Bearer + phone required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$",
+              "description": "E.164 phone selecting the customer."
+            },
+            "limit": {
+              "description": "Page size.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "page": {
+              "description": "1-indexed page number.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_payment_links",
+        "title": "List pending payment links",
+        "description": "Pending payment_requests on the customer's unpaid orders. Bearer + phone required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$",
+              "description": "E.164 phone selecting the customer."
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_customer_best_deals",
+        "title": "Personalised best deals for a customer",
+        "description": "Top deal projections based on the customer's tags + M Club tier. Bearer + phone required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+\\d{6,15}$",
+              "description": "E.164 phone selecting the customer."
+            },
+            "limit": {
+              "description": "Max deals to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

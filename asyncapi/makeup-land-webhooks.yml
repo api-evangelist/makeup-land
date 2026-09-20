@@ -1,0 +1,46 @@
+generated: '2026-09-19'
+method: searched
+kind: webhook-catalog
+asyncapi_published: false
+source: >-
+  openapi/makeup-land-openapi.yml (registerCustomer description and response schema; getRegistration
+  response schema), https://makeup.land/pricing.md §5 ("Webhook proxy for partner registrations"),
+  https://makeup.land/auth.md (agent_auth.events_supported), and live probes of /asyncapi.yaml and
+  /asyncapi.json on 2026-09-19 (both return the HTML catch-all page — no AsyncAPI exists).
+summary: >-
+  makeup.land documents ONE outbound webhook: a partner webhook dispatched by POST /api/v1/register when a
+  registration creates a new customer. The provider documents when it fires, that it is retried, and how
+  its delivery outcome is reported back — but publishes no payload schema, no signing scheme, no
+  subscription endpoint and no event-type catalog. Two credential lifecycle events are declared in the
+  authorization-server metadata with an explicit "No webhook delivery today". This is a thin, honestly
+  recorded event surface, not an AsyncAPI.
+events:
+- name: partner registration webhook
+  event_type_published: false
+  trigger: registerCustomer when created is true ("WA template + webhooks fire only when created === true")
+  direction: outbound to the partner system linked to the register-scoped token's registration_source
+  subscription: Configured by makeup.land when the register-scoped token is issued ("Webhook proxy for partner registrations — issued alongside a register-scoped token", pricing.md); no self-service endpoint.
+  delivery_report:
+    inline: >-
+      registerCustomer response webhook {status: sent | skipped | failed | disabled, status_code, attempts, error}
+    later: getRegistration response webhook {status, url, status_code, attempts}; listRegistrations webhook_status
+  retries: attempts is reported as an integer > 0, so delivery is retried; the schedule is not published.
+  payload: not published
+  signing: not published
+  source_operations: [registerCustomer, getRegistration, listRegistrations]
+- name: credential.issued
+  event_type_published: true
+  declared_in: https://makeup.land/.well-known/oauth-authorization-server (agent_auth.events_supported)
+  delivery: none — auth.md "Lifecycle events the AS may surface in future. No webhook delivery today."
+- name: credential.revoked
+  event_type_published: true
+  declared_in: https://makeup.land/.well-known/oauth-authorization-server (agent_auth.events_supported)
+  delivery: none — as above
+inbound_channels_noted:
+- The registerCustomer operation is itself "designed to be invoked by wa.makeup.land on every inbound WhatsApp contact" — an internal inbound event feed into the API, not a public webhook.
+- Rewards "earn fires on payment.completed" (pricing.md) — an internal event name mentioned in prose, not a subscribable webhook.
+gaps:
+- No AsyncAPI document
+- No event payload schemas
+- No signature / verification scheme
+- No webhook management endpoints

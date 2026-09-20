@@ -64,5 +64,9 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-א. ט. הפקות בע״מ / A.T. Hafakot Ltd. is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.
-- https://makeup.land/
+makeup.land (operated by א. ט. הפקות בע״מ / A.T. Hafakot Ltd., Zikhron Yaakov, Israel) is a Hebrew-first professional cosmetics retailer that publishes an unusually complete machine-readable surface from its own domain: a 21-operation OpenAPI 3.1 contract at https://makeup.land/openapi.json (product search with CIE ΔE 2000 shade matching, customers and the ℳ-credit loyalty wallet, carts, orders, gift cards, payment links, partner registration and catalog proposals), a live remote MCP server at https://makeup.land/api/mcp (8 read-only tools, anonymous tools/list, listed as land.makeup/v1 in the Official MCP Registry), RFC 8414 / RFC 9728 OAuth metadata, an A2A-shaped agent card, an ai-manifest and UCP merchant profile, llms.txt and markdown twins, and Google Merchant / OpenAI ACP product feeds. Bearer tokens are issued by email; every write takes an Idempotency-Key.
+
+- Website: https://makeup.land/
+- OpenAPI: https://makeup.land/openapi.json
+- Agent handbook: https://makeup.land/llms-full.txt
+- MCP server: https://makeup.land/api/mcp (metadata repo: https://github.com/makeup-land/makeup-land-mcp)

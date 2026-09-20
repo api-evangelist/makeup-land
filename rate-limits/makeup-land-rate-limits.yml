@@ -1,0 +1,61 @@
+generated: '2026-09-19'
+method: searched
+source: https://makeup.land/openapi.json
+docs: https://makeup.land/auth.md
+limit_count: 3
+summary: >-
+  Limits are published per endpoint inside the OpenAPI 429 response descriptions, not on a rate-limit page:
+  60 requests/minute per token on customer opportunities, 60/minute per source IP on the public gift-card
+  validate and the phone-keyed best-deals endpoints; registerCustomer declares a 429 without a number.
+  llms-full.txt adds that phone-keyed endpoints are "rate-limited per source IP on top of bearer validation".
+  The only documented runtime signal is Retry-After on the 429 with error_code rate_limited; no X-RateLimit-*
+  or RateLimit-* headers are documented, and none were present on live 400/401/404 responses observed
+  2026-09-19. pricing.md states "There is no paid API tier today", so limits are not tier-dependent.
+headers:
+  retry_after: Retry-After
+  remaining: null
+  limit: null
+  reset: null
+  request_id: null
+response_codes:
+  throttled: 429
+  error_code: rate_limited
+rate_limits:
+- name: Customer opportunities
+  scope: per-token
+  limit: 60
+  window: 60s
+  metric: request
+  burst: null
+  applies_to: ['GET /api/v1/customers/{id}/opportunities (listCustomerOpportunities)']
+  evidence: OpenAPI 429 description "Rate limit exceeded (60/min per token)"
+- name: Customer best deals
+  scope: per-ip
+  limit: 60
+  window: 60s
+  metric: request
+  burst: null
+  applies_to: ['GET /api/v1/customers/best-deals (getCustomerBestDeals)']
+  evidence: OpenAPI 429 description "Rate limit exceeded (60/min per IP)"
+- name: Gift card validate (public)
+  scope: per-ip
+  limit: 60
+  window: 60s
+  metric: request
+  burst: null
+  applies_to: ['GET /api/v1/gift-cards/validate (validateGiftCard)']
+  evidence: OpenAPI 429 description "Rate limit exceeded (60/min per IP)"; llms-full.txt "Format-guarded + rate-limited per IP"
+undocumented:
+- applies_to: ['POST /api/v1/register (registerCustomer)']
+  note: Declares a 429 "Rate limit exceeded" with no limit value.
+- applies_to: [all other operations]
+  note: No 429 declared and no limit published.
+crawler_preference:
+  note: Not an API limit — /.well-known/ai-manifest.json asks AI crawlers for a preferred_rate_limit of "10 rps".
+observed:
+- url: https://makeup.land/api/v1/products?limit=2
+  status: 400
+  rate_limit_headers: none
+- url: https://makeup.land/api/v1/brands
+  status: 401
+  rate_limit_headers: none

@@ -1,0 +1,160 @@
+generated: '2026-09-19'
+method: probed
+source: https://makeup.land/.well-known/agent-card.json
+card:
+  file: a2a/makeup-land-agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: makeup.land
+  note: >-
+    Served from the apex, which is also the API, MCP and authorization-server host. The legacy
+    /.well-known/agent.json 404s. www., api. and mcp. subdomains do not resolve. Ownership is not in
+    question: provider.organization is the company's Hebrew/English legal name, provider.url is
+    https://makeup.land, the OpenAPI it links declares servers[] https://makeup.land, and the same card URL
+    is advertised in the site's robots.txt, llms.txt, homepage footer and the V1 API's own 404 envelope.
+    The card is also what put this company on a2aregistry.org, which is how the harvest found it.
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://makeup.land/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json; charset=utf-8
+  body_bytes: 6568
+  body_parses_as: JSON object with AgentCard shape (name, url, version, capabilities, skills, securitySchemes, additionalInterfaces)
+  corroborating_probes:
+  - url: https://makeup.land/.well-known/agent.json
+    http_status: 404
+  - url: https://makeup.land/api/v1
+    method: POST (JSON-RPC message/send)
+    http_status: 404
+    note: >-
+      The card's url is the REST base, not an A2A endpoint. A JSON-RPC message/send POST returns the V1
+      REST 404 envelope {"error_code":"endpoint_not_found"} with a discovery block that points back at this
+      card. There is no A2A task endpoint.
+  - url: https://makeup.land/api/a2a
+    method: POST
+    http_status: 404
+  - url: https://makeup.land/a2a
+    method: POST
+    http_status: 200
+    note: The 200 is the site's HTML catch-all page for unknown slugs, not an A2A responder.
+agent_card:
+  name: makeup.land
+  description: >-
+    Israeli professional cosmetics retailer. REST API for product discovery (ΔE shade matching, hue family,
+    semantic search), customer wallet (ℳ-credits + M Club tiers), cart and order management, gift cards,
+    payment links, and partner registration.
+  version: 1.0.0
+  url: https://makeup.land/api/v1
+  provider:
+    organization: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+    url: https://makeup.land
+  capabilities:
+    streaming: false
+    pushNotifications: false
+    stateTransitionHistory: false
+  default_input_modes: [application/json]
+  default_output_modes: [application/json]
+  security_schemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearer_format: ml_<hex>
+      description: Long-lived bearer token issued out-of-band. Scopes full, register, giftcards, proposals. Request via shop@makeup.land.
+    phoneIdentifier:
+      type: apiKey
+      description: Phone identifier (?phone=+972... E.164) selecting the customer; NOT a credential — bearerAuth is still required alongside.
+  skill_count: 7
+  skills:
+  - id: shade_match
+    name: Shade matching by hex
+    tags: [search, color, products, cosmetics]
+    input_modes: [application/json, text/plain]
+    rest_operation: listProducts
+  - id: product_search
+    name: Product search and filtering
+    tags: [search, catalog, products]
+    rest_operation: listProducts
+  - id: customer_lookup
+    name: Customer lookup and wallet balance
+    tags: [customers, loyalty, wallet]
+    rest_operation: getCustomer
+  - id: cart_management
+    name: Cart add / update / clear
+    tags: [cart, checkout]
+    rest_operations: [getCart, addCartItem, patchCartItem, deleteCartItem, clearCart]
+  - id: order_history
+    name: Order history and status
+    tags: [orders, history]
+    rest_operation: listOrders
+  - id: gift_card_redeem
+    name: Gift card validate and redeem
+    tags: [gift-cards, payments]
+    rest_operations: [validateGiftCard, redeemGiftCard]
+  - id: register_customer
+    name: Customer registration
+    tags: [customers, onboarding, whatsapp]
+    rest_operation: registerCustomer
+  additional_interfaces:
+  - transport: openapi
+    url: https://makeup.land/openapi.json
+  - transport: mcp-manifest
+    url: https://makeup.land/.well-known/mcp.json
+  - transport: mcp
+    url: https://makeup.land/api/mcp
+  - transport: markdown
+    url: https://makeup.land/llms-full.txt
+conformance:
+  spec: A2A 1.0.0
+  grade: flavored
+  protocol_version: null
+  preferred_transport: null
+  hard_checks:
+    capabilities_is_object: true
+    protocol_version_present: false
+    skills_is_array: true
+  optional_fields:
+    default_input_modes: true
+    default_output_modes: true
+    preferred_transport: false
+  grade_basis: >-
+    Graded against the A2A 1.0.0 hard checks. capabilities is an OBJECT (pass) with streaming,
+    pushNotifications and stateTransitionHistory as boolean fields. skills is an ARRAY (pass) of seven
+    well-formed skills with id, name, description, tags, examples, inputModes and outputModes. protocolVersion
+    is ABSENT (fail) — neither at the top level (0.3 shape) nor on a supportedInterfaces[] entry (1.0 shape);
+    the only "version" is the card's own 1.0.0 and the MCP protocolVersion mentioned in prose. One hard-check
+    failure makes the grade flavored. Beyond the checklist, the card describes no A2A transport at all: url is
+    the REST base (POST returns the REST 404 envelope), and additionalInterfaces[] lists openapi, mcp-manifest,
+    mcp and markdown — none is an A2A protocol binding (JSONRPC, GRPC, HTTP+JSON). This is a discovery card
+    for a REST + MCP provider written in A2A vocabulary, not an A2A agent an A2A client could send a task to.
+  deviations:
+  - field: protocolVersion
+    observed: absent
+    note: No A2A protocol version anywhere in the card. An A2A 0.3 or 1.0 reader cannot tell which revision the card targets.
+  - field: url
+    observed: https://makeup.land/api/v1 (REST base)
+    note: >-
+      A2A requires url to be the agent's A2A endpoint. This one answers a JSON-RPC POST with the REST API's
+      404 envelope (error_code endpoint_not_found). There is no message/send, tasks/get or streaming surface.
+  - field: additionalInterfaces[].transport
+    observed: openapi, mcp-manifest, mcp, markdown
+    note: A2A transports are JSONRPC, GRPC and HTTP+JSON. The declared values are the provider's other discovery surfaces, not A2A interface bindings.
+  - field: preferredTransport
+    observed: absent
+    note: Optional in 0.3; superseded by supportedInterfaces[] in 1.0. Neither is present.
+  - field: supportedInterfaces
+    observed: absent
+    note: The card is 0.3-shaped (top-level url + additionalInterfaces + flat securitySchemes), not 1.0-shaped.
+  - field: skills[].security
+    observed: absent per skill; card-level security lists bearerAuth + phoneIdentifier
+    note: Per-skill auth is only in prose (e.g. gift_card validate is public, redeem needs scope giftcards). A reader cannot machine-select which skills need which scope.
+  - field: securitySchemes.phoneIdentifier
+    observed: type apiKey with no `in`/`name`
+    note: The card's own description says it is not a credential; declaring it as a securityScheme is a convenience, not an A2A auth scheme.
+surface_relationship:
+  note: >-
+    makeup.land's real agent surfaces are the REST API (21 operations, openapi/) and the live MCP server at
+    https://makeup.land/api/mcp (8 tools, anonymous tools/list — see mcp/makeup-land-mcp.yml). The agent card is a
+    third description of those two surfaces and is the widest of the three in prose (7 skills, including cart
+    writes and registration) while the MCP server is the narrowest (read-only). Nothing in the card is callable
+    over A2A.

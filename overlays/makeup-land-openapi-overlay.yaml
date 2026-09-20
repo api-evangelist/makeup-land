@@ -1,0 +1,90 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the makeup.land API
+  version: 1.0.0
+extends: ../openapi/makeup-land-openapi.yml
+x-generated: '2026-09-19'
+x-method: generated
+x-source: >-
+  Generated from openapi/makeup-land-openapi.yml plus the searched artifacts in this repo (well-known/,
+  mcp/, a2a/, conventions/, rate-limits/, errors/). Records API Evangelist annotations without mutating
+  the provider's contract.
+actions:
+- target: $.info
+  description: Link the provider's own machine-readable discovery surface from the contract.
+  update:
+    x-llms-txt: https://makeup.land/llms.txt
+    x-llms-full-txt: https://makeup.land/llms-full.txt
+    x-agent-auth-guide: https://makeup.land/auth.md
+    x-mcp-endpoint: https://makeup.land/api/mcp
+    x-mcp-manifest: https://makeup.land/.well-known/mcp.json
+    x-agent-card: https://makeup.land/.well-known/agent-card.json
+    x-oauth-protected-resource: https://makeup.land/.well-known/oauth-protected-resource
+    x-oauth-authorization-server: https://makeup.land/.well-known/oauth-authorization-server
+    x-ai-manifest: https://makeup.land/.well-known/ai-manifest.json
+    x-ucp-profile: https://makeup.land/.well-known/ucp
+    x-pricing: https://makeup.land/pricing.md
+    x-mcp-registry: land.makeup/v1
+- target: $.info
+  description: Record the idempotency contract as data (the spec states it in prose and per-parameter).
+  update:
+    x-idempotency:
+      header: Idempotency-Key
+      coverage: full
+      retention: 24h
+      key_format: UUIDv4
+- target: $.info
+  description: Record the operator identity published in the site's JSON-LD and terms of use.
+  update:
+    x-operator:
+      legal_name: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+      company_number: '513942789'
+      country: IL
+- target: $.info
+  description: Point at API Evangelist's structured companions to this contract.
+  update:
+    x-apievangelist:
+      conventions: conventions/makeup-land-conventions.yml
+      errors: errors/makeup-land-problem-types.yml
+      rate_limits: rate-limits/makeup-land-rate-limits.yml
+      data_model: data-model/makeup-land-data-model.yml
+      tool_crosswalk: mcp/makeup-land-tool-crosswalk.yml
+- target: $.paths['/api/v1/customers/{id}/opportunities'].get
+  description: Lift the rate limit stated in the 429 description into data.
+  update:
+    x-rate-limit: {limit: 60, window: 60s, scope: per-token, exhaustion_status: 429, headers: [Retry-After]}
+- target: $.paths['/api/v1/customers/best-deals'].get
+  update:
+    x-rate-limit: {limit: 60, window: 60s, scope: per-ip, exhaustion_status: 429, headers: [Retry-After]}
+- target: $.paths['/api/v1/gift-cards/validate'].get
+  update:
+    x-rate-limit: {limit: 60, window: 60s, scope: per-ip, exhaustion_status: 429, headers: [Retry-After]}
+    x-public: true
+- target: $.paths['/api/v1/products'].get
+  description: Record which MCP tool wraps this operation and the observed anonymous behaviour.
+  update:
+    x-mcp-tool: list_products
+    x-anonymous: catalog filters only; bearer required once phone, relevant_to_phone or include=inventory is passed
+- target: $.paths['/api/v1/brands'].get
+  update: {x-mcp-tool: list_brands}
+- target: $.paths['/api/v1/customers'].get
+  update: {x-mcp-tool: get_customer}
+- target: $.paths['/api/v1/cart'].get
+  update: {x-mcp-tool: get_cart}
+- target: $.paths['/api/v1/orders'].get
+  update: {x-mcp-tool: list_orders}
+- target: $.paths['/api/v1/payment-links'].get
+  update: {x-mcp-tool: list_payment_links}
+- target: $.paths['/api/v1/customers/best-deals'].get
+  update: {x-mcp-tool: get_customer_best_deals}
+- target: $.paths['/api/v1/gift-cards/validate'].get
+  update: {x-mcp-tool: validate_gift_card}
+- target: $.tags[?(@.name=='Products')]
+  update:
+    description: Catalog browse and search — cross-lingual q, exact Hebrew tag, brand, ΔE 2000 near_hex shade matching, hue_family, sort; anonymous for catalog filters.
+- target: $.tags[?(@.name=='Cart')]
+  update:
+    description: A customer's persistent cart, selected by phone; all writes idempotent via Idempotency-Key; stock- and wallet-gated.
+- target: $.tags[?(@.name=='Gift Cards')]
+  update:
+    description: Validate (public) and redeem (scope giftcards) gift cards; list a customer's cards.

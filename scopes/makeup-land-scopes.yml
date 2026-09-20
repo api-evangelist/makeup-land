@@ -1,0 +1,65 @@
+generated: '2026-09-19'
+method: searched
+source: openapi/makeup-land-openapi.yml
+docs: https://makeup.land/auth.md
+note: >-
+  These are NOT OAuth 2.0 scopes negotiated at request time. derive-oauth-scopes.py found no oauth2 scheme
+  (correctly). The provider publishes the same five scope names in three places — the OpenAPI root x-scopes
+  map and per-operation security[] requirements on the bearerAuth scheme, the RFC 8414 authorization-server
+  metadata scopes_supported, and the RFC 9728 protected-resource metadata scopes_supported — and auth.md
+  explains they are fixed on a bearer token when a human issues it. read_only is a flag, not a scope, but
+  the provider lists it under scopes_supported.
+schemes:
+- name: bearerAuth
+  type: http
+  scheme: bearer
+  bearerFormat: ml_<hex24>
+  source: openapi/makeup-land-openapi.yml
+  issuance: Manual, by email (info@makeup.land / shop@makeup.land) — auth.md "identity_assertion + email"
+  discovery:
+  - https://makeup.land/.well-known/oauth-authorization-server
+  - https://makeup.land/.well-known/oauth-protected-resource
+scopes:
+- scope: full
+  description: Full read + write access. Default scope for first-party tokens.
+  operations: [listBrands, listProducts, getCustomer, upsertCustomer, patchCustomerTags, listCustomerOpportunities, getCustomerBestDeals, getCart, clearCart, addCartItem, patchCartItem, deleteCartItem, listOrders, listGiftCards, redeemGiftCard, listPaymentLinks, registerCustomer, listRegistrations, getRegistration, submitProposals]
+  sources:
+  - "openapi x-scopes"
+  - "openapi security[]"
+  - "oauth-authorization-server"
+  - "oauth-protected-resource"
+- scope: register
+  description: Issue new customer registrations and read registrations belonging to the token's registration_source. Restricted to the /register and /registrations endpoints (plus customer opportunities).
+  operations: [registerCustomer, listRegistrations, getRegistration, listCustomerOpportunities]
+  sources:
+  - "openapi x-scopes"
+  - "openapi security[]"
+  - "oauth-authorization-server"
+  - "oauth-protected-resource"
+- scope: giftcards
+  description: Redeem gift cards. Required only by POST /gift-cards/redeem. The public /gift-cards/validate endpoint requires no token.
+  operations: [redeemGiftCard]
+  sources:
+  - "openapi x-scopes"
+  - "openapi security[]"
+  - "oauth-authorization-server"
+  - "oauth-protected-resource"
+- scope: proposals
+  description: Submit catalog enrichment proposals to /proposals. Read-only against the rest of the catalog.
+  operations: [submitProposals]
+  sources:
+  - "openapi x-scopes"
+  - "openapi security[]"
+  - "oauth-authorization-server"
+  - "oauth-protected-resource"
+- scope: read_only
+  kind: flag
+  description: Marker for tokens whose read_only=true flag rejects every write with 403 read_only_token. Not negotiated at request time — set at token issuance.
+  operations: []
+  sources: [openapi x-scopes, oauth-authorization-server, oauth-protected-resource]
+unauthenticated_operations:
+- validateGiftCard
+- listProducts (catalog filters only — bearer required once phone, include=inventory or relevant_to_phone is passed)
+selector_not_scope:
+  name: phoneIdentifier
+  note: The phone query/body parameter selects a customer and is declared as an apiKey securityScheme, but the provider's own description says it is not a credential and bearerAuth is always required alongside it.

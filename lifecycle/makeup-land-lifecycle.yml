@@ -1,0 +1,45 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  OpenAPI info.description "Versioning & deprecation policy" (https://makeup.land/openapi.json), the
+  identical section in https://makeup.land/llms-full.txt, https://makeup.land/auth.md (SLA statement),
+  and live probes of status.makeup.land, /status and /changelog on 2026-09-19.
+versioning:
+  scheme: uri-path
+  current: v1
+  base: https://makeup.land/api/v1
+  docs: https://makeup.land/llms-full.txt
+  policy: >-
+    "Breaking changes always land under a new major version path (/api/v2/); additive changes (new optional
+    fields, new endpoints, new error_code values) ship in-place on v1 without notice."
+  announced_breaking_change: error_code "will become required in the next API version" (currently optional).
+  regeneration: The OpenAPI and llms-full.txt regenerate on a 1-hour cache TTL; the OpenAPI is declared canonical when they disagree.
+deprecation:
+  policy_url: https://makeup.land/llms-full.txt
+  policy_location: OpenAPI info.description and llms-full.txt "Versioning & deprecation"
+  sunset_header: true
+  deprecation_header: true
+  link_rel_deprecation: true
+  notice_period: at least 6 months before the sunset date
+  standards: [RFC 8594, RFC 9745]
+  policy: >-
+    "When an endpoint or field is scheduled for removal, responses include the Deprecation: true and Sunset:
+    <RFC 7231 HTTP-date> headers (per RFC 8594 / RFC 9745) for at least 6 months before the sunset date, with a
+    Link: <docs>; rel=\"deprecation\" header pointing at the migration guide."
+  observed: false
+  note: No V1 endpoint is currently deprecated (spec statement, confirmed — 0 operations carry deprecated true), so the headers have not been observed live.
+sla:
+  url: null
+  uptime_target: null
+  note: >-
+    No uptime SLA is published. auth.md states, of token issuance turnaround, "There is no SLA today." Token
+    requests are answered "a few business hours during Israel working hours".
+status_page: null
+status_page_note: status.makeup.land does not resolve; /status and /api/v1/status are the HTML catch-all and the REST 404 respectively. No status page is published.
+changelog: null
+changelog_note: No dated changelog is published (/changelog is the HTML catch-all). The only versioning signal is the v1 path and the spec's info.version 1.0.0.
+deprecated_operations: []
+token_lifecycle:
+  expiry: Tokens do not expire automatically.
+  revocation: Manual, by email to info@makeup.land with the token prefix; no self-service revocation endpoint.
+  source: https://makeup.land/auth.md

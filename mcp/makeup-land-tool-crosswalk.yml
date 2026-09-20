@@ -1,0 +1,98 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived by binding the LIVE MCP tools/list (mcp/makeup-land-mcp-tools.json, fetched anonymously
+  2026-09-19) to the operationIds in openapi/makeup-land-openapi.yml (21 operations). The MCP server's
+  own tool descriptions name the REST path each tool wraps, and the GitHub README states the server
+  "matches the V1 REST API's contract exactly", so every binding is by declared path, not by guess.
+purpose: >-
+  Make the MCP tool the discovery unit and bind it to the REST operation whose parameters and responses
+  are its real contract. Also records that the MCP surface is a strict READ-ONLY subset of the REST surface.
+surfaces:
+  rest_openapi: openapi/makeup-land-openapi.yml
+  rest_operations: 21
+  graphql: null
+  mcp: https://makeup.land/api/mcp
+  mcp_gated: false
+  mcp_note: tools/list and initialize answer anonymously; 6 of 8 tools need a bearer at call time.
+crosswalk:
+- tool: list_products
+  category: catalog
+  rest: [listProducts]
+  binding: rest
+  confidence: high
+  note: The tool's inputSchema (q, tag, brand, near_hex, hue_family, sort, limit, page, phone) is a subset of listProducts' 15 query parameters — it omits in_stock, max_price, max_credit_cents, relevant_to_phone, include, delta_e_max and coverage.
+- tool: list_brands
+  category: catalog
+  rest: [listBrands]
+  binding: rest
+  confidence: high
+- tool: validate_gift_card
+  category: gift-cards
+  rest: [validateGiftCard]
+  binding: rest
+  confidence: high
+  note: The only fully public REST route and the only fully public tool.
+- tool: get_customer
+  category: customers
+  rest: [getCustomer]
+  binding: rest
+  confidence: high
+  note: The REST operation also accepts email; the tool exposes phone only.
+- tool: get_cart
+  category: cart
+  rest: [getCart]
+  binding: rest
+  confidence: high
+- tool: list_orders
+  category: orders
+  rest: [listOrders]
+  binding: rest
+  confidence: high
+  note: The tool adds page; the REST operation takes phone, email, limit.
+- tool: list_payment_links
+  category: payments
+  rest: [listPaymentLinks]
+  binding: rest
+  confidence: high
+- tool: get_customer_best_deals
+  category: loyalty
+  rest: [getCustomerBestDeals]
+  binding: rest
+  confidence: high
+mcp_only: []
+rest_only:
+- operationId: upsertCustomer
+  reason: write — MCP v1 is read-only (provider README)
+- operationId: patchCustomerTags
+  reason: write
+- operationId: listCustomerOpportunities
+  reason: read, not exposed; scope full or register
+- operationId: clearCart
+  reason: write
+- operationId: addCartItem
+  reason: write — listed in /.well-known/mcp.json as addCartItem but absent from the live server
+- operationId: patchCartItem
+  reason: write
+- operationId: deleteCartItem
+  reason: write
+- operationId: listGiftCards
+  reason: read, not exposed
+- operationId: redeemGiftCard
+  reason: write; scope giftcards
+- operationId: registerCustomer
+  reason: write — listed in /.well-known/mcp.json as registerCustomer but absent from the live server; scope register
+- operationId: listRegistrations
+  reason: read, not exposed; scope register
+- operationId: getRegistration
+  reason: read, not exposed; scope register
+- operationId: submitProposals
+  reason: write; scope proposals
+coverage:
+  mcp_tools: 8
+  bound_to_rest: 8
+  mcp_only: 0
+  rest_operations: 21
+  rest_covered_by_mcp: 8
+  rest_only: 13
+  rest_writes_exposed_over_mcp: 0

@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.2",
+  "name": "makeup.land",
+  "description": "Professional makeup and cosmetics e-commerce in Hebrew (Israel). Authentic products from leading brands with semantic shade search and ℳ-credits rewards.",
+  "languages": [
+    "he-IL",
+    "en"
+  ],
+  "regions": [
+    "IL"
+  ],
+  "homepage": "https://makeup.land",
+  "contact": {
+    "email": "info@makeup.land",
+    "whatsapp": "+972772233344"
+  },
+  "ai_usage_policy": {
+    "allowed": [
+      "search-indexing",
+      "answer-engine",
+      "agentic-shopping"
+    ],
+    "conditional": [
+      "model-training"
+    ],
+    "disallowed": [
+      "competitive-scraping",
+      "price-arbitrage-bots"
+    ],
+    "attribution_required": true,
+    "commercial_use_allowed": true
+  },
+  "crawler_directives": {
+    "respect_robots_txt": true,
+    "preferred_rate_limit": "10 rps",
+    "preferred_user_agents": [
+      "GPTBot",
+      "OAI-SearchBot",
+      "ClaudeBot",
+      "PerplexityBot",
+      "Google-Extended",
+      "Applebot-Extended"
+    ]
+  },
+  "feeds": [
+    {
+      "type": "product-catalog",
+      "format": "rss-2.0-google-merchant",
+      "url": "https://makeup.land/api/merchant/feed"
+    },
+    {
+      "type": "product-catalog",
+      "format": "openai-acp-jsonl",
+      "url": "https://makeup.land/api/merchant/openai/products"
+    },
+    {
+      "type": "product-reviews",
+      "format": "google-product-reviews-v2.4",
+      "url": "https://makeup.land/api/merchant/reviews"
+    },
+    {
+      "type": "site-map",
+      "format": "sitemap-xml",
+      "url": "https://makeup.land/sitemap.xml"
+    },
+    {
+      "type": "llms-guide",
+      "format": "llms-txt",
+      "url": "https://makeup.land/llms.txt"
+    },
+    {
+      "type": "api-specification",
+      "format": "openapi-3.1",
+      "url": "https://makeup.land/openapi.json"
+    }
+  ],
+  "structured_data": {
+    "jsonld": [
+      "Product",
+      "BreadcrumbList",
+      "Organization",
+      "WebSite"
+    ],
+    "schema_version": "https://schema.org"
+  },
+  "last_updated": "2026-09-19"
+}

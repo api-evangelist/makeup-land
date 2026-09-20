@@ -1,18 +1,178 @@
 aid: makeup-land
 name: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
-description: 'א. ט. הפקות בע״מ / A.T. Hafakot Ltd. is a company surfaced via the API Evangelist harvest
-  backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.'
+description: >-
+  makeup.land, operated by א. ט. הפקות בע״מ / A.T. Hafakot Ltd. (company no. 513942789, Zikhron Yaakov and
+  Haifa, Israel), is a Hebrew-first professional cosmetics retailer carrying ~1,550 products from 34+ brands,
+  with ℳ-credit loyalty wallet, M Club tiers, gift cards and a virtual try-on. It publishes a 21-operation
+  OpenAPI 3.1 contract at makeup.land/openapi.json — product search with CIE ΔE 2000 shade matching and
+  cross-lingual semantic search, customers and wallet, carts, orders, gift cards, payment links, partner
+  registration and catalog proposals — every write idempotent via Idempotency-Key, bearer tokens issued by
+  email with four scopes. Alongside it: a live remote MCP server at makeup.land/api/mcp (8 read-only tools,
+  anonymous tools/list, Official MCP Registry land.makeup/v1), RFC 8414 and RFC 9728 OAuth metadata with a
+  WorkOS-style auth.md, an A2A-shaped agent card, an ai-manifest and UCP merchant profile, llms.txt with
+  markdown twins, and Google Merchant and OpenAI ACP product feeds.
+image: https://makeup.land/apple-icon.png
 url: https://raw.githubusercontent.com/api-evangelist/makeup-land/refs/heads/main/apis.yml
 x-type: company
 x-source: harvest:a2a-registry
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: enrichment-pipeline
+x-legal-name: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+x-company-number: '513942789'
+x-country: IL
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
 tags:
-- Company
-apis: []
+- Cosmetics
+- Beauty
+- Retail
+- eCommerce
+- Shopping
+- Loyalty
+- Gift Cards
+- Product Search
+- Agentic Commerce
+- MCP
+- agent-native
+- Israel
+tags_raw:
+- Cosmetics
+- Beauty
+- Retail
+- eCommerce
+- Shopping
+- Loyalty
+- Gift Cards
+- Product Search
+- Agentic Commerce
+- MCP
+- Agent-native
+- Israel
+apis:
+- aid: makeup-land:makeup-land-v1-api
+  name: makeup.land V1 API
+  description: >-
+    REST API for the makeup.land storefront under https://makeup.land/api/v1 — 21 operations across
+    Products (cross-lingual q, exact Hebrew tag, brand, ΔE 2000 near_hex shade matching, hue_family, sort),
+    Brands, Customers (lookup, upsert, tags, M Club opportunities, best deals), Cart (get, add, patch,
+    delete, clear — all idempotent), Orders (read-only, six status axes), Gift Cards (public validate,
+    scoped redeem), Payment Links, Register (partner onboarding with webhook + WhatsApp dispatch) and
+    Proposals (catalog enrichment). Bearer ml_ tokens with scopes full / register / giftcards / proposals
+    and a read_only flag; phone (E.164) selects the customer on phone-keyed endpoints.
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Cosmetics
+  - Product Search
+  - Shopping Cart
+  - Gift Cards
+  - Loyalty
+  - Orders
+  tags_raw:
+  - Cosmetics
+  - Product Search
+  - Shopping Cart
+  - Gift Cards
+  - Loyalty
+  - Orders
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-openapi.yml
+  - type: OpenAPI
+    name: Provider-hosted OpenAPI 3.1 (JSON, canonical)
+    url: https://makeup.land/openapi.json
+  - type: OpenAPI
+    name: Provider-hosted OpenAPI 3.1 (YAML mirror)
+    url: https://makeup.land/openapi.yaml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    name: auth.md (provider agent-auth manifest)
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Overlay
+    url: overlays/makeup-land-openapi-overlay.yaml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-mcp-server
+  name: makeup.land MCP Server
+  description: >-
+    Remote Model Context Protocol server at https://makeup.land/api/mcp — Streamable HTTP, stateless,
+    protocol revision 2025-06-18. initialize and tools/list answer anonymously; 8 read-only tools
+    (list_products with ΔE shade matching, list_brands, validate_gift_card, get_customer, get_cart,
+    list_orders, list_payment_links, get_customer_best_deals). Catalog and gift-card tools work without
+    credentials; customer tools take the same ml_ bearer as the REST API plus an E.164 phone. Listed in the
+    Official MCP Registry as land.makeup/v1; the first-party GitHub repo holds server.json, smithery.yaml
+    and an integrator guide. The /.well-known/mcp.json manifest drifts from the live tool list.
+  humanURL: https://github.com/makeup-land/makeup-land-mcp
+  baseURL: https://makeup.land/api/mcp
+  tags:
+  - MCP
+  - agent-native
+  - Cosmetics
+  tags_raw:
+  - MCP
+  - Agent-native
+  - Cosmetics
+  properties:
+  - type: MCPServer
+    url: mcp/makeup-land-mcp.yml
+  - type: MCPServer
+    name: Live endpoint (Streamable HTTP)
+    url: https://makeup.land/api/mcp
+  - type: ToolCrosswalk
+    url: mcp/makeup-land-tool-crosswalk.yml
+  - type: Documentation
+    url: https://github.com/makeup-land/makeup-land-mcp
+  - type: GitHubRepository
+    url: https://github.com/makeup-land/makeup-land-mcp
+  - type: WellKnown
+    name: MCP discovery manifest
+    url: https://makeup.land/.well-known/mcp.json
+- aid: makeup-land:makeup-land-merchant-feeds
+  name: makeup.land Merchant & Agentic Commerce Feeds
+  description: >-
+    Public, token-free catalog feeds under https://makeup.land/api/merchant — a Google Merchant Center RSS
+    2.0 product feed (/feed), a Google Product Reviews 2.4 feed (/reviews) and an OpenAI Agentic Commerce
+    Protocol JSON Lines product feed (/openai/products; credits-only variants omitted because ChatGPT
+    checkout pays in fiat). Declared in llms.txt, pricing.md, the ai-manifest and the UCP merchant profile.
+  humanURL: https://makeup.land/llms.txt
+  baseURL: https://makeup.land/api/merchant
+  tags:
+  - Agentic Commerce
+  - Product Feeds
+  - eCommerce
+  tags_raw:
+  - Agentic Commerce
+  - Product Feeds
+  - eCommerce
+  properties:
+  - type: Documentation
+    url: https://makeup.land/llms.txt
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
@@ -21,3 +181,74 @@ maintainers:
 common:
 - type: Website
   url: https://makeup.land/
+- type: Documentation
+  url: https://makeup.land/llms-full.txt
+- type: APIReference
+  url: https://makeup.land/openapi.json
+- type: GettingStarted
+  url: https://makeup.land/llms-api.txt
+- type: Authentication
+  url: authentication/makeup-land-authentication.yml
+- type: Authentication
+  name: auth.md (provider agent-auth manifest)
+  url: https://makeup.land/auth.md
+- type: Pricing
+  url: https://makeup.land/pricing.md
+- type: TermsOfService
+  url: https://makeup.land/%D7%AA%D7%A0%D7%90%D7%99-%D7%A9%D7%99%D7%9E%D7%95%D7%A9
+- type: FAQ
+  url: https://makeup.land/%D7%A9%D7%90%D7%9C%D7%95%D7%AA-%D7%A0%D7%A4%D7%95%D7%A6%D7%95%D7%AA
+- type: About
+  url: https://makeup.land/%D7%90%D7%95%D7%93%D7%95%D7%AA
+- type: GitHubOrganization
+  url: https://github.com/makeup-land
+- type: LLMsTxt
+  url: llms/makeup-land-llms.txt
+- type: LLMsTxt
+  name: Provider-hosted llms.txt
+  url: https://makeup.land/llms.txt
+- type: WellKnown
+  url: well-known/makeup-land-well-known.yml
+- type: AgentCard
+  url: a2a/makeup-land-a2a.yml
+- type: MCPServer
+  url: mcp/makeup-land-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/makeup-land-tool-crosswalk.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: OpenAPI
+  url: openapi/makeup-land-openapi.yml
+- type: Overlay
+  url: overlays/makeup-land-openapi-overlay.yaml
+- type: Conventions
+  url: conventions/makeup-land-conventions.yml
+- type: Idempotency
+  url: conventions/makeup-land-conventions.yml
+- type: ErrorCatalog
+  url: errors/makeup-land-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/makeup-land-lifecycle.yml
+- type: Deprecation
+  url: https://makeup.land/llms-full.txt
+- type: RateLimits
+  url: rate-limits/makeup-land-rate-limits.yml
+- type: Plans
+  url: plans/makeup-land-plans-pricing.yml
+- type: Packages
+  url: packages/makeup-land-packages.yml
+- type: DataModel
+  url: data-model/makeup-land-data-model.yml
+- type: OAuthScopes
+  url: scopes/makeup-land-scopes.yml
+- type: Conformance
+  url: conformance/makeup-land-conformance.yml
+- type: Webhooks
+  url: asyncapi/makeup-land-webhooks.yml
+- type: DomainSecurity
+  url: security/makeup-land-domain-security.yml
+x-enrichment:
+  date: '2026-09-19'
+  status: enriched
+  artifacts_added: 35
+  pass: local-v3

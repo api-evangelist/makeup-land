@@ -1,0 +1,88 @@
+# makeup.land
+
+> חנות איפור וקוסמטיקה מקצועית בעברית. מותגים מובילים, מוצרים אותנטיים, צבירת ℳ-credits בכל הזמנה, חיפוש סמנטי לפי גוון, וירטואלי try-on לשפתיים וסומק. משלוחים בכל ישראל.
+
+## Storefront entry points
+
+- [Home](https://makeup.land): catalog, brands, semantic search, shade-match try-on
+- [Search](https://makeup.land/search?q={query}): semantic search in Hebrew/English over the full catalog
+- [Sitemap](https://makeup.land/sitemap.xml): every product and brand URL
+
+## Brands
+
+- [Adah Lazorgan / עדה לזורגן](https://makeup.land/adah-lazorgan)
+- [Anna Wistrich / אנה ויסטריך](https://makeup.land/anna-wistrich)
+- [Areej Salih / אריג' צאלח](https://makeup.land/areej-salih)
+- [BaliBody / באלי בודי](https://makeup.land/balibody)
+- [BAMS / באמס](https://makeup.land/bams)
+- [beauty blender / ביוטי בלנדר](https://makeup.land/beauty-blender)
+- [Boaz Stein / בועז שטיין](https://makeup.land/boaz-stein)
+- [Da Vinci / דה וינצ'י](https://makeup.land/da-vinci)
+- [Dr Dabour / ד"ר דאבור](https://makeup.land/dr-dabour)
+- [Ergo Tech / ארגו טק](https://makeup.land/ergo-tech)
+- [Event / אירוע](https://makeup.land/event)
+- [GARNIER / גרנייה](https://makeup.land/garnier)
+- [Gerovital / ג'רוויטאל](https://makeup.land/gerovital)
+- [I'm Fashion Makeup / אני פאשן מייקאפ](https://makeup.land/im-fashion-makeup)
+- [IDO SHOHAT / עידו שוחט](https://makeup.land/ido-shohat)
+- [INGLOT / אינגלוט](https://makeup.land/inglot)
+- [Jihan Awad / ג'יהאן עוואד](https://makeup.land/jihan-awad)
+- [L'OREAL / לוריאל](https://makeup.land/loreal)
+- [Lily Coral / לילי קורל](https://makeup.land/lily-coral)
+- [makeup.land / מייקאפ.לנד](https://makeup.land/makeupland)
+- [Malu Wilz / מאלו וילץ](https://makeup.land/malu-wilz)
+- [MAYBELLINE NY / מייבלין ניו יורק](https://makeup.land/maybelline-ny)
+- [Mediskin / מדיסקין](https://makeup.land/mediskin)
+- [Mehron / מהרון](https://makeup.land/mehron)
+- [Michal Revah Zafrani / מיכל רווח זעפרני](https://makeup.land/michal-revah-zafrani)
+- [Monaco / מונאקו](https://makeup.land/monaco)
+- [Mycospring / מיקוספרינג](https://makeup.land/mycospring)
+- [NIVO / ניבו](https://makeup.land/nivo)
+- [Pros-Aide / פרוס-אייד](https://makeup.land/pros-aide)
+- [Salon Pro / סלון פרו](https://makeup.land/salon-pro)
+- [Svetlana Keller / סבטלנה קלר](https://makeup.land/svetlana-keller)
+- [Tatooim / טאטואים](https://makeup.land/tatooim)
+- [TEMPTU / טמפטו](https://makeup.land/temptu)
+- [Westcott / ווסטקוט](https://makeup.land/westcott)
+- [X-Rite / אקס-רייט](https://makeup.land/x-rite)
+- [YARIN SHAHAF / ירין שחף](https://makeup.land/yarin-shahaf)
+- [Yossi Bitton / יוסי ביטון](https://makeup.land/yossi-bitton)
+
+## Long-form guides
+
+- [llms-full.txt](https://makeup.land/llms-full.txt): full agent handbook — API authentication, quickstart, error envelopes, dual-tender pricing, rewards model
+- [llms-api.txt](https://makeup.land/llms-api.txt): V1 API quickstart only — focused on the REST surface
+- [llms-brands.txt](https://makeup.land/llms-brands.txt): brand directory with slugs and partnership highlights
+- [llms-face.txt](https://makeup.land/llms-face.txt): face products — foundation, concealer, powder, blush, contour, highlighter
+- [llms-eyes.txt](https://makeup.land/llms-eyes.txt): eye products — eyeshadow, eyeliner, mascara, brow, lashes
+- [llms-lips.txt](https://makeup.land/llms-lips.txt): lip products — lipstick, gloss, liner, tint, balm
+- [index.md](https://makeup.land/index.md): markdown homepage twin for agents that prefer markdown over HTML
+- [pricing.md](https://makeup.land/pricing.md): monetary surfaces — product pricing, ℳ-credit wallet, M Club tiers + earn rates, shipping ranges, refund policy
+- [auth.md](https://makeup.land/auth.md): WorkOS-format agent authentication manifest — how to obtain bearer tokens, scopes available, error codes, revocation flow
+
+## Agent discovery metadata
+
+- [MCP discovery manifest](https://makeup.land/.well-known/mcp.json): tools, endpoints, auth pointers — protocolVersion 2025-06-18
+- [A2A Agent Card](https://makeup.land/.well-known/agent-card.json): A2A spec agent card with skills, security schemes, additional interfaces
+- [Protected Resource Metadata](https://makeup.land/.well-known/oauth-protected-resource): JSON discovery for the V1 API resource (RFC 9728)
+- [Authorization Server Metadata](https://makeup.land/.well-known/oauth-authorization-server): JSON discovery with WorkOS `agent_auth` block (RFC 8414)
+
+## Machine-readable feeds
+
+- [Merchant feed (RSS 2.0)](https://makeup.land/api/merchant/feed): Google Merchant Center product feed
+- [Reviews feed](https://makeup.land/api/merchant/reviews): Google Product Reviews v2.4
+- [OpenAI ACP feed](https://makeup.land/api/merchant/openai/products): Agentic Commerce Protocol JSON Lines
+- [AI manifest](https://makeup.land/.well-known/ai-manifest.json): IETF ai-manifest descriptor
+- [UCP profile](https://makeup.land/.well-known/ucp): Google Unified Commerce Profile
+
+## API
+
+- [OpenAPI 3.1 specification (JSON)](https://makeup.land/openapi.json): full V1 API surface — products, customers, cart, orders, gift cards, payment links, register, proposals. Bearer auth (with scoped tokens: `full` / `register` / `giftcards` / `proposals`) plus phone-keyed endpoints.
+- [OpenAPI 3.1 specification (YAML)](https://makeup.land/openapi.yaml): YAML mirror of the same spec.
+- [Products endpoint](https://makeup.land/api/v1/products): bearer-auth REST with prices, swatches, ratings, ΔE near-hex shade matching, and dual-tender (ILS + ℳ-credits) pricing
+
+## Notes for AI agents
+
+- Catalog language is Hebrew-primary (he-IL); product names and marketing copy are bilingual where enriched.
+- Prices are in ILS (₪). Some products are also priceable in ℳ-credits — see `credit_price` on variants.
+- Shade matching: products carry per-variant hex swatches; the `near_hex` query parameter on `/api/v1/products` returns ΔE-ranked matches.

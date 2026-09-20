@@ -1,0 +1,202 @@
+{
+  "name": "makeup.land",
+  "url": "https://makeup.land/api/v1",
+  "version": "1.0.0",
+  "description": "Israeli professional cosmetics retailer. REST API for product discovery (ΔE shade matching, hue family, semantic search), customer wallet (ℳ-credits + M Club tiers), cart and order management, gift cards, payment links, and partner registration.",
+  "provider": {
+    "organization": "א. ט. הפקות בע״מ / A.T. Hafakot Ltd.",
+    "url": "https://makeup.land"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "ml_<hex>",
+      "description": "Long-lived bearer token issued out-of-band. Scopes: full, register, giftcards, proposals. Request via shop@makeup.land."
+    },
+    "phoneIdentifier": {
+      "type": "apiKey",
+      "description": "Phone identifier (?phone=+972... in E.164) selecting which customer's resources to return on cart, payment-links, gift-cards listing, best-deals, and opportunities endpoints. This is NOT a credential — bearerAuth is still required alongside. Bearer authenticates the caller; phone selects the customer."
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": [],
+      "phoneIdentifier": []
+    },
+    {
+      "bearerAuth": []
+    }
+  ],
+  "skills": [
+    {
+      "id": "shade_match",
+      "name": "Shade matching by hex",
+      "description": "Find products carrying a swatch close to a target hex color, ranked by perceptual distance (ΔE 2000). Supports hue_family refinement (warm/cool/neutral) and per-customer reward projection.",
+      "tags": [
+        "search",
+        "color",
+        "products",
+        "cosmetics"
+      ],
+      "examples": [
+        "Find lipsticks close to #C2185B",
+        "Match a foundation to my skin tone #E8D4B8 with warm undertone"
+      ],
+      "inputModes": [
+        "application/json",
+        "text/plain"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "product_search",
+      "name": "Product search and filtering",
+      "description": "Search via `q` (cross-lingual natural-language query — Hebrew, English, transliteration all return semantically-equivalent results), or filter via `tag` (EXACT-string match against Hebrew-stored tags), `brand`, or `sort` (price / popularity / Bayesian-shrunk rating). Returns ILS and ℳ-credit prices side-by-side for tender-aware checkout.",
+      "tags": [
+        "search",
+        "catalog",
+        "products"
+      ],
+      "examples": [
+        "List the top 10 most-popular lipsticks under ₪150",
+        "Show all NYX products with rating above 4.5"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "customer_lookup",
+      "name": "Customer lookup and wallet balance",
+      "description": "Lookup customer by phone (E.164). Returns tags, ℳ-credit wallet balance, M Club tier, opportunity claims.",
+      "tags": [
+        "customers",
+        "loyalty",
+        "wallet"
+      ],
+      "examples": [
+        "Get balance for +972501234567"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "cart_management",
+      "name": "Cart add / update / clear",
+      "description": "Manipulate a customer's persistent cart. Supports tender selection (ils vs credits), gift-personalization, idempotent POST/PATCH via Idempotency-Key. Stock-gated; credits-tender items wallet-gated.",
+      "tags": [
+        "cart",
+        "checkout"
+      ],
+      "examples": [
+        "Add product prod_x variant var_y quantity 2 for +972501234567",
+        "Switch line li_abc from ils to credits tender"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "order_history",
+      "name": "Order history and status",
+      "description": "List a customer's recent orders with 6-axis status (order/payment/fulfillment/delivery/return/review).",
+      "tags": [
+        "orders",
+        "history"
+      ],
+      "examples": [
+        "List the 5 most recent orders for +972501234567"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "gift_card_redeem",
+      "name": "Gift card validate and redeem",
+      "description": "Validate a gift card balance (public, no auth) or redeem against an order (scope: giftcards). Partner-issued + internal cards unified.",
+      "tags": [
+        "gift-cards",
+        "payments"
+      ],
+      "examples": [
+        "Check balance for code XXXX-XXXX-XXXX",
+        "Redeem code XXXX against order ord_123"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "register_customer",
+      "name": "Customer registration",
+      "description": "Generic registration orchestrator — create or look up a customer, compute partner-config-driven tags, fire WhatsApp template and partner webhooks. Designed for inbound WA proof of phone ownership. Scope: register.",
+      "tags": [
+        "customers",
+        "onboarding",
+        "whatsapp"
+      ],
+      "examples": [
+        "Register +972501234567 with source=wa-inbound and tags=['first-touch']"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "additionalInterfaces": [
+    {
+      "transport": "openapi",
+      "url": "https://makeup.land/openapi.json",
+      "description": "Full OpenAPI 3.1 specification for all V1 endpoints."
+    },
+    {
+      "transport": "mcp-manifest",
+      "url": "https://makeup.land/.well-known/mcp.json",
+      "description": "MCP discovery manifest (companion to this card)."
+    },
+    {
+      "transport": "mcp",
+      "url": "https://makeup.land/api/mcp",
+      "description": "Live MCP server (Streamable-HTTP / JSON-RPC). Speaks protocolVersion 2025-06-18."
+    },
+    {
+      "transport": "markdown",
+      "url": "https://makeup.land/llms-full.txt",
+      "description": "Long-form agent handbook covering API, rewards model, dual-tender pricing, error envelopes."
+    }
+  ]
+}

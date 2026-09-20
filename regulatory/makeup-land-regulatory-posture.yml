@@ -1,0 +1,69 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source: >-
+  Harvested artifacts in this repo (well-known/, security/, lifecycle/, conformance/), live probes of the
+  conventional paths on 2026-09-19, the Hebrew legal pages linked from the storefront footer (terms of use,
+  returns/cancellations, FAQ, about, loyalty program, resellers, pickup points), the homepage HTML (hrefs and
+  JSON-LD), and the provider's markdown twins (index.md, pricing.md, auth.md).
+signals: {}
+searched:
+  sbom:
+    result: none
+    probes: [{url: https://makeup.land/security/sbom, status: 200, note: HTML catch-all page, not a document}, {url: https://makeup.land/.well-known/security.txt, status: 404}]
+  support_lifetime:
+    result: none
+    note: The versioning policy promises 6 months' notice before a sunset (lifecycle/), which is a deprecation-notice period, not a stated product support lifetime. No support period is published.
+  accessibility_conformance:
+    result: none
+    note: >-
+      The terms of use (updated 15 March 2026) state the site was made accessible under Israel's Equal Rights
+      for Persons with Disabilities (Service Accessibility Adjustments) Regulations 5773-2013 and that "detailed
+      information about our accessibility arrangements appears in the accessibility statement published on the
+      site" — but no accessibility statement is linked from the homepage or footer, /accessibility and
+      /pages/accessibility are the HTML catch-all and a 404, and no WCAG / IS 5568 level is named anywhere
+      reachable. A reference to a statement is not the statement; no signal recorded.
+    probes: [{url: https://makeup.land/accessibility, status: 200, note: catch-all page titled "accessibility - makeup.land"}, {url: https://makeup.land/pages/accessibility, status: 404}, {url: https://makeup.land/תנאי-שימוש, status: 200, note: mentions an accessibility statement without linking one}]
+  training_data_summary:
+    result: none
+  ai_transparency:
+    result: none
+    note: /.well-known/ai-manifest.json is an AI *usage* policy for crawlers and agents (what they may do with the site's content), not a disclosure about AI used in the product. The virtual try-on and semantic search are described as features, with no AI-transparency page. Not recorded.
+    probes: [{url: https://makeup.land/ai, status: 200, note: catch-all}, {url: https://makeup.land/ai/transparency, status: 200, note: catch-all}]
+  global_privacy_control:
+    result: none
+    note: No published statement. Per the contract no Sec-GPC header probe was used.
+  data_subject_request:
+    result: none
+    note: >-
+      The terms of use say personal data is handled under Israel's Protection of Privacy Law 5741-1981 "as
+      detailed in the site's privacy policy", but no privacy policy is linked from the homepage, footer or terms
+      page, and /privacy, /privacy-policy and /pages/privacy-policy are the HTML catch-all or 404. The terms do
+      publish a marketing opt-out (unsubscribe link or customer service) under the Israeli spam law amendment.
+      No DSR channel is published.
+    probes: [{url: https://makeup.land/privacy, status: 200, note: catch-all}, {url: https://makeup.land/privacy-policy, status: 200, note: catch-all}, {url: https://makeup.land/pages/privacy-policy, status: 404}, {url: https://makeup.land/privacy/requests, status: 200, note: catch-all}]
+  subprocessors:
+    result: none
+    probes: [{url: https://makeup.land/legal/subprocessors, status: 404}]
+  data_residency:
+    result: none
+    note: The UCP profile and ai-manifest declare regions_served [IL] (a market, not a data-residency commitment). Not recorded.
+  incident_notification:
+    result: none
+    probes: [{url: https://makeup.land/legal/dpa, status: 404}]
+  age_assurance:
+    result: none
+    note: The terms require purchasers to be 18 or have guardian consent — an eligibility term, not an age-assurance mechanism or an age-signal API. Not recorded.
+  notice_and_action:
+    result: none
+    probes: [{url: https://makeup.land/legal/report-content, status: 200, note: catch-all}]
+  transparency_report:
+    result: none
+    probes: [{url: https://makeup.land/transparency, status: 200, note: catch-all}]
+  exit_assistance:
+    result: none
+    note: No data export or portability documentation. listOrders / getCustomer are read APIs for a partner, not a customer export.
+soft_404_warning: >-
+  makeup.land answers every unknown top-level slug with a 200 HTML page whose title echoes the slug
+  ("transparency - makeup.land"), so a keyword probe on these paths self-satisfies. Every 200 above was
+  read, not just counted; none carried the substance the signal requires.

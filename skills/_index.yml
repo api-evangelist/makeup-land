@@ -1,0 +1,33 @@
+generated: '2026-09-19'
+method: generated
+source: >-
+  openapi/makeup-land-openapi.yml (every operationId below verified against the spec), the provider's
+  llms-full.txt / llms-api.txt / pricing.md, and the live MCP tools/list. One provider-published skill
+  file was searched and saved verbatim (makeup-land-auth.md).
+skills:
+- file: makeup-land-auth.md
+  name: makeup.land auth.md
+  method: searched
+  source: https://makeup.land/auth.md
+  description: The provider's own WorkOS-format agent authentication manifest — how to obtain, use and revoke an ml_ bearer, the scopes, the error table. Saved verbatim; referenced from the RFC 8414 agent_auth.skill and RFC 9728 x-agent-auth-skill fields.
+  operations: 0
+- file: makeup-land-shade-match-catalog.md
+  name: makeup-land-shade-match-catalog
+  method: generated
+  description: Shade-match by hex (ΔE 2000), hue family, brand and cross-lingual search over the catalog, anonymously.
+  operations: 2
+- file: makeup-land-cart-management.md
+  name: makeup-land-cart-management
+  method: generated
+  description: Read and mutate a customer's cart idempotently with stock, wallet and tender gates handled.
+  operations: 7
+- file: makeup-land-gift-card-validate-redeem.md
+  name: makeup-land-gift-card-validate-redeem
+  method: generated
+  description: Validate a gift card publicly and redeem it once with a giftcards-scoped token.
+  operations: 3
+- file: makeup-land-partner-registration.md
+  name: makeup-land-partner-registration
+  method: generated
+  description: Register customers from a partner system and follow webhook, WhatsApp and opportunity outcomes.
+  operations: 5

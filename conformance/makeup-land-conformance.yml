@@ -1,0 +1,109 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  Live probes of makeup.land's discovery documents and feeds on 2026-09-19, the OpenAPI at
+  https://makeup.land/openapi.json (securitySchemes, parameters, responses, info.description),
+  https://makeup.land/auth.md, https://makeup.land/llms-full.txt, the MCP initialize result, the
+  terms-of-use page, and the a2a/ grading in this repo. Each entry names the evidence it rests on.
+standards:
+- id: rfc9728-oauth-protected-resource-metadata
+  conforms: true
+  evidence: https://makeup.land/.well-known/oauth-protected-resource — 200 application/json; resource, authorization_servers, scopes_supported, bearer_methods_supported present. Saved at well-known/makeup-land-oauth-protected-resource.json.
+- id: rfc8414-oauth-authorization-server-metadata
+  conforms: true
+  evidence: https://makeup.land/.well-known/oauth-authorization-server — 200 application/json with issuer and scopes_supported.
+  caveat: >-
+    authorization_endpoint and token_endpoint are null and grant_types_supported is empty. The document
+    is published in RFC 8414 shape but describes an issuer with no OAuth flow; tokens are issued by email
+    (agent_auth.identity_assertion.methods [email_manual]). Treat as metadata-present, flow-absent.
+- id: oauth2
+  conforms: false
+  evidence: No oauth2 securityScheme in the OpenAPI; the authorization-server metadata declares no endpoints or grant types; auth.md states "no programmatic registration endpoint, no OTP claim ceremony, no anonymous flow".
+- id: oidc
+  conforms: false
+  evidence: https://makeup.land/.well-known/openid-configuration — 404.
+- id: rfc6750-bearer-token
+  conforms: true
+  evidence: OpenAPI securitySchemes.bearerAuth type http scheme bearer (bearerFormat ml_<hex24>); bearer_methods_supported [header] in the protected-resource metadata; live 401 {"error":"Unauthorized"} on GET /api/v1/brands without a token.
+- id: workos-auth-md-agent-auth
+  conforms: true
+  evidence: https://makeup.land/auth.md — 200 text/markdown, declared "per the WorkOS auth.md skill format"; referenced from the RFC 8414 agent_auth.skill field and the RFC 9728 x-agent-auth-skill field. Saved verbatim at skills/makeup-land-auth.md.
+- id: idempotency-key
+  conforms: true
+  evidence: Idempotency-Key header parameter declared on all 9 mutating operations in the OpenAPI (24h replay window, UUIDv4 recommended); info.description "Idempotency" section; auth.md and llms-full.txt restate it. See conventions/makeup-land-conventions.yml.
+- id: pagination
+  conforms: true
+  style: page-number
+  evidence: listProducts and listRegistrations take limit (1-50) and page (1-indexed) and return total, page, has_more (listProducts adds partial).
+- id: rfc8594-sunset-header
+  conforms: true
+  basis: declared policy, not yet observable
+  evidence: >-
+    OpenAPI info.description "Versioning & deprecation policy" — "responses include the Deprecation: true and Sunset: <RFC 7231 HTTP-date> headers (per RFC 8594 / RFC 9745) for at least 6 months before the sunset date, with a Link rel=deprecation header". No V1 endpoint is currently deprecated, so no header has been observed.
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: All error responses are application/json {error, error_code} — no application/problem+json anywhere in the spec or on the live 400/401/404 responses.
+- id: json-api
+  conforms: false
+  evidence: Plain JSON objects with resource-named top-level keys (products, brands, orders); no JSON:API media type or document structure.
+- id: mcp-2025-06-18
+  conforms: true
+  evidence: POST https://makeup.land/api/mcp initialize — 200, result.protocolVersion 2025-06-18, serverInfo makeup.land 1.0.0; tools/list returns 8 tools with JSON Schema draft-07 inputSchema. See mcp/makeup-land-mcp.yml.
+- id: a2a-agent-card
+  conforms: false
+  grade: flavored
+  evidence: https://makeup.land/.well-known/agent-card.json — 200; capabilities is an object and skills an array, but protocolVersion is absent and url is the REST base (POST returns the REST 404 envelope). See a2a/makeup-land-a2a.yml.
+- id: llms-txt
+  conforms: true
+  evidence: https://makeup.land/llms.txt — 200 text/plain in llms.txt format (H1, blockquote summary, H2 sections of links). Also llms-full.txt, llms-api.txt, llms-brands.txt, llms-face/eyes/lips.txt and index.md.
+- id: ai-manifest
+  conforms: true
+  basis: provider-labelled "IETF ai-manifest descriptor", schema_version 0.2
+  evidence: https://makeup.land/.well-known/ai-manifest.json — 200 application/json; ai_usage_policy, crawler_directives, feeds[]. Saved at well-known/makeup-land-ai-manifest.json.
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: https://makeup.land/.well-known/security.txt — 404.
+- id: rfc9727-api-catalog
+  conforms: false
+  evidence: https://makeup.land/.well-known/api-catalog — 404.
+- id: apis-json
+  conforms: false
+  evidence: /.well-known/apis.json 404; /apis.json and /apis.yml return the 200 HTML catch-all page.
+- id: openapi-3.1
+  conforms: true
+  evidence: https://makeup.land/openapi.json — openapi 3.1.0, 21 operations, 100% operationIds, 100% summaries, 20/21 descriptions, 0 examples, inline JSON Schema 2020-12 schemas (no components.schemas).
+- id: pci-dss
+  conforms: true
+  basis: provider statement, unverified
+  evidence: Terms of use (https://makeup.land/תנאי-שימוש) — "האתר עומד בתקן אבטחה מחמיר (PCI-DSS). סליקת כרטיסי האשראי מתבצעת על ידי חברת סליקה חיצונית ומאובטחת. פרטי האשראי של המשתמשים אינם נשמרים" (card processing by an external PCI-DSS processor; card data not stored by the operator). No attestation, AOC or trust page is published; this is a one-paragraph claim, not a compliance program.
+domain_standards:
+  sector: retail / e-commerce (cosmetics)
+  note: >-
+    Retail has no single contract standard the way finance has ISO 20022, but two agentic-commerce feed
+    formats and one merchant-profile format are now the de facto standards for machine shopping, and
+    makeup.land serves all three from its own host. These are recorded because they are observable
+    documents, not claims.
+  entries:
+  - id: openai-agentic-commerce-protocol-product-feed
+    conforms: true
+    evidence: https://makeup.land/api/merchant/openai/products — 200 application/x-ndjson (5.9 MB); first line {"feed_id":"makeup-land-products","target_country":"IL"}, then one product object per line with id, title, url, media[], variants[]. Named "OpenAI ACP feed" in llms.txt, pricing.md and ai-manifest.json. The provider notes credits-only variants are dropped because ChatGPT checkout pays in fiat.
+    location: feed, not a checkout endpoint — /.well-known/acp.json 404
+  - id: google-merchant-center-rss-2.0
+    conforms: true
+    evidence: https://makeup.land/api/merchant/feed — 200 application/xml (2.6 MB); <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"> with g:id / g:title / g:description items.
+  - id: google-product-reviews-2.4
+    conforms: true
+    basis: served; format as labelled by the provider
+    evidence: https://makeup.land/api/merchant/reviews — 200 application/xml (2.7 MB); labelled "Google Product Reviews v2.4" in llms.txt and ai-manifest.json.
+  - id: unified-commerce-profile
+    conforms: true
+    basis: served; provider-labelled "Google Unified Commerce Profile", profile_version 2026-04-08
+    evidence: https://makeup.land/.well-known/ucp — 200 application/json; merchant, contact, currencies [ILS], regions_served [IL], payment_methods, fulfillment, return_policy {window_days 14}, feeds, capabilities.
+  - id: schema.org-json-ld
+    conforms: true
+    evidence: Homepage carries 8 application/ld+json blocks — Organization (legalName, taxID 513942789, vatID IL513942789, address), two Store/LocalBusiness/HealthAndBeautyBusiness branches, WebSite with SearchAction; ai-manifest.json declares Product, BreadcrumbList, Organization, WebSite.
+compliance_program_published: false
+compliance_note: >-
+  No trust center, certification page, SOC 2 / ISO 27001 statement, DPA or subprocessor list was found
+  (/security, /trust, /compliance, /legal/dpa, /legal/subprocessors are catch-all 200s or 404s). The PCI-DSS
+  sentence in the terms of use is the only compliance statement published. No Compliance pointer is emitted.

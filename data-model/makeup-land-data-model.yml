@@ -1,0 +1,168 @@
+generated: '2026-09-19'
+method: derived
+source: openapi/makeup-land-openapi.yml
+summary: >-
+  Derived from the inline response and request schemas of the 21 V1 operations (the spec declares no
+  components.schemas — every schema is inline JSON Schema 2020-12). Customer is the domain root and is
+  keyed by phone rather than by id on most operations: carts, orders, gift cards, payment links,
+  opportunities and best deals are all selected with an E.164 phone. Product → Variant → Swatch is the
+  catalog spine. Entities link by id field (product_id, variant_id, line_item_id, order_id, customer_id),
+  never by embedded $ref, and there is no expand parameter — a client follows ids with further calls.
+id_style:
+  format: opaque string
+  prefixes_published: false
+  note: >-
+    The agent card's examples use prod_x / var_y / li_abc / ord_123 placeholders, but the live ACP and
+    Merchant feeds show catalog ids of the form prod-<epoch-ms>-<6 chars> with variants suffixed -v<n>
+    (e.g. prod-1789666226737-k2q846, prod-1789666226737-k2q846-v1). Credentials are prefixed (ml_ bearer);
+    resource ids are not documented as prefixed.
+entities:
+- name: Brand
+  description: A cosmetics brand carried by the store (34+), with bilingual name, slug, logo and product count.
+  operations: [listBrands]
+  fields: [name, name_he, slug, logo, product_count]
+  relationships:
+  - has_many: Product
+    via: brand.slug
+- name: Product
+  description: A catalog product with bilingual title, handle, images, price range, tags, rating and its variants and swatches; may carry a per-request shade_match and reward_earned projection.
+  operations: [listProducts]
+  fields: [product_id, title, handle, url, image_url, images, price, compare_at_price, credit_price, min_price, max_price, brand, product_type, in_stock, description, tags, average_rating, total_reviews, shade_match, reward_earned, inventory_policy, track_quantity, stock_by_location]
+  relationships:
+  - belongs_to: Brand
+    via: brand.slug
+  - has_many: Variant
+    via: variants[]
+  - has_many: Swatch
+    via: swatches[]
+- name: Variant
+  description: A purchasable SKU of a product with ILS price, optional ℳ-credit price, stock and swatch hex.
+  operations: [listProducts]
+  fields: [variant_id, title, price, compare_at_price, credit_price, in_stock, image_url, swatch, inventory_policy, available, stock_by_location]
+  relationships:
+  - belongs_to: Product
+    via: product_id
+  - has_many: CartLineItem
+    via: variant_id
+  - has_many: OrderLineItem
+    via: variant_id
+- name: Swatch
+  description: A hex colour attached to a variant, the unit that ΔE shade matching ranks.
+  fields: [hex, variant_id, option_handle]
+  relationships:
+  - belongs_to: Variant
+    via: variant_id
+- name: Customer
+  description: A shopper identified by phone (E.164), with tags, ℳ-credit wallet balance, M Club tier (derived from tags such as pro / pro+), spend and order counts.
+  operations: [getCustomer, upsertCustomer, patchCustomerTags, registerCustomer]
+  fields: [id, name, first_name, last_name, email, phone, avatar_url, tags, city, address, total_spent, total_orders, created_at, last_activity_at, credit_balance, credit_balance_formatted]
+  relationships:
+  - has_one: Wallet
+    via: credit_balance (embedded, no separate resource)
+  - has_one: Cart
+    via: phone → customer_id
+  - has_many: Order
+    via: phone / email
+  - has_many: GiftCard
+    via: phone
+  - has_many: PaymentLink
+    via: phone
+  - has_many: Opportunity
+    via: customer id / phone
+  - has_many: Registration
+    via: customer_id
+- name: Wallet
+  description: The ℳ-credit balance (agorot) surfaced on Customer and on getCustomerBestDeals as wallet {balance_cents, balance_formatted}.
+  fields: [balance_cents, balance_formatted]
+  relationships:
+  - belongs_to: Customer
+- name: Opportunity
+  description: An open M Club offer (kind, Hebrew title/description, bonus, CTA) plus the customer's referral code and stats.
+  operations: [listCustomerOpportunities]
+  fields: [id, kind, title_he, description_he, bonus_formatted, cta_action, cta_url, context, available_at, sort_priority]
+  relationships:
+  - belongs_to: Customer
+- name: Cart
+  description: The customer's most-recently-updated persistent cart with per-line and total reward projection.
+  operations: [getCart, clearCart]
+  fields: [cart_id, customer_id, updated_at, items, reward_projection_total_cents]
+  relationships:
+  - belongs_to: Customer
+    via: customer_id
+  - has_many: CartLineItem
+    via: items[]
+- name: CartLineItem
+  description: A cart line for a product variant with quantity, tender (ils | credits), gift personalisation and reward projection.
+  operations: [addCartItem, patchCartItem, deleteCartItem]
+  fields: [line_item_id, product_id, variant_id, product_title, variant_title, brand_slug, product_slug, image, price, tender, credit_price, quantity, product_tags, track_quantity, gift_personalization, reward_projection_cents]
+  relationships:
+  - belongs_to: Cart
+    via: cart_id
+  - belongs_to: Product
+    via: product_id
+  - belongs_to: Variant
+    via: variant_id
+- name: Order
+  description: A placed order with six status axes (order, payment, fulfillment, delivery via shipments, return, review), totals, refunded amount, line items and shipments. Read-only over the API.
+  operations: [listOrders]
+  fields: [id, order_number, order_number_text, email, phone, order_status, payment_status, fulfillment_status, return_status, subtotal, discount, shipping, total, refunded_amount, customer_name, shipping_city, cancelled_at, payment_method, tags, created_at]
+  relationships:
+  - belongs_to: Customer
+    via: phone / email
+  - has_many: OrderLineItem
+    via: line_items[]
+  - has_many: Shipment
+    via: shipments[]
+  - has_many: PaymentLink
+    via: order_id
+  - has_many: GiftCard
+    via: order_id (cards purchased in the order)
+- name: OrderLineItem
+  fields: [product_id, variant_id, product_title, variant_title, sku, quantity, price, total, tender, credit_amount_paid_cents]
+  relationships:
+  - belongs_to: Order
+  - belongs_to: Variant
+    via: variant_id
+- name: Shipment
+  fields: [id, carrier, tracking_number, status, delivered_at]
+  relationships:
+  - belongs_to: Order
+- name: GiftCard
+  description: A partner-issued or internal gift card with amount, balance, status and issuing order; validated publicly by code and redeemed against an order with scope giftcards.
+  operations: [listGiftCards, validateGiftCard, redeemGiftCard]
+  fields: [id, amount, balance, currency, status, issued_at, sender_name, greeting_url, is_partner_issued, order_id]
+  relationships:
+  - belongs_to: Customer
+    via: phone
+  - belongs_to: Order
+    via: order_id
+- name: PaymentLink
+  description: A pending payment request (token + hosted url) on an unpaid order.
+  operations: [listPaymentLinks]
+  fields: [token, url, amount, currency, method, order_id, order_number, created_at, updated_at]
+  relationships:
+  - belongs_to: Order
+    via: order_id
+  - belongs_to: Customer
+    via: phone
+- name: Registration
+  description: A partner-originated customer registration record with its webhook and WhatsApp delivery status.
+  operations: [registerCustomer, listRegistrations, getRegistration]
+  fields: [id, phone, name, email, tags, status, created, customer_id, webhook_status, whatsapp_status, registered_at, webhook, whatsapp]
+  relationships:
+  - belongs_to: Customer
+    via: customer_id
+- name: Proposal
+  description: A catalog-enrichment proposal (entity_type, entity_id, field_name, proposed_value, source, confidence) submitted in batches of up to 200 with scope proposals.
+  operations: [submitProposals]
+  fields: [entity_type, entity_id, field_name, proposed_value, source, source_detail, confidence, vector, proposed_by, request_id, source_urls, vps_confidence]
+  relationships:
+  - belongs_to: Product or Variant
+    via: entity_type + entity_id
+- name: BestDealsRecommendation
+  description: A computed, not stored, answer from getCustomerBestDeals — wallet, retail_total_cents, candidate and option sets, a recommendation and curated deals.
+  operations: [getCustomerBestDeals]
+  fields: [wallet, retail_total_cents, target_cash_cents, candidates, options, recommendation, curated_deals, curated_has_more, sources_used]
+  relationships:
+  - belongs_to: Customer
+    via: phone

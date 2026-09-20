@@ -1,0 +1,105 @@
+{
+  "profile_version": "2026-04-08",
+  "merchant": {
+    "name": "makeup.land",
+    "legal_name": "makeup.land",
+    "homepage": "https://makeup.land",
+    "description": "Professional makeup and cosmetics e-commerce in Israel. Authentic products from leading brands; Hebrew-primary catalog with semantic shade search.",
+    "logo": "https://makeup.land/assets/logos/makeup-land-logo.svg",
+    "country_of_origin": "IL",
+    "established_year": 2024
+  },
+  "contact": {
+    "email": "info@makeup.land",
+    "whatsapp": "+972772233344",
+    "url": "https://makeup.land/pages/contact"
+  },
+  "languages": [
+    "he-IL",
+    "en"
+  ],
+  "primary_language": "he-IL",
+  "regions_served": [
+    "IL"
+  ],
+  "currencies": [
+    "ILS"
+  ],
+  "alternative_value_systems": [
+    {
+      "symbol": "ℳ",
+      "name": "ℳ-credits",
+      "description": "Loyalty wallet earned via purchases and reviews; redeemable on selected items."
+    }
+  ],
+  "payment_methods": [
+    "card",
+    "google_pay",
+    "apple_pay",
+    "gift_card",
+    "store_credit"
+  ],
+  "fulfillment": {
+    "shipping_origin": "IL",
+    "shipping_destinations": [
+      "IL"
+    ],
+    "typical_handling_days": {
+      "min": 0,
+      "max": 1
+    },
+    "typical_transit_days": {
+      "min": 1,
+      "max": 3
+    }
+  },
+  "return_policy": {
+    "window_days": 14,
+    "method": "return_by_mail",
+    "fees": "buyer_pays_return_shipping",
+    "applicable_country": "IL"
+  },
+  "catalog": {
+    "product_count_disclosed": false,
+    "languages": [
+      "he",
+      "en"
+    ],
+    "enrichment_level": "rich",
+    "taxonomy": "google-product-taxonomy"
+  },
+  "feeds": {
+    "products_rss": "https://makeup.land/api/merchant/feed",
+    "products_acp_jsonl": "https://makeup.land/api/merchant/openai/products",
+    "reviews_google": "https://makeup.land/api/merchant/reviews",
+    "sitemap": "https://makeup.land/sitemap.xml",
+    "llms_guide": "https://makeup.land/llms.txt",
+    "ai_manifest": "https://makeup.land/.well-known/ai-manifest.json"
+  },
+  "api": {
+    "public_products": {
+      "url": "https://makeup.land/api/v1/products",
+      "auth": "bearer",
+      "token_prefix": "ml_",
+      "documentation": "https://makeup.land/pages/api"
+    }
+  },
+  "social": {
+    "facebook": "https://facebook.com/makeupland.il",
+    "instagram": "https://instagram.com/makeupland.il",
+    "youtube": "https://youtube.com/c/makeupland"
+  },
+  "capabilities": {
+    "semantic_search": true,
+    "shade_color_search": true,
+    "virtual_try_on": [
+      "lipstick",
+      "blush"
+    ],
+    "personalisation": [
+      "season-color-profile"
+    ],
+    "bilingual_catalog": true
+  },
+  "last_updated": "2026-09-19"
+}

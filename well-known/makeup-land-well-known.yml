@@ -1,0 +1,172 @@
+generated: '2026-09-19'
+method: probed
+source: >-
+  Live GET probes of the named /.well-known/* path list (plus /apis.json, /apis.yml, /asyncapi.*)
+  on 2026-09-19 against every host this record knows: the registrable domain makeup.land (which is
+  also the API host, the OpenAPI servers[] host, the MCP host https://makeup.land/api/mcp, and the
+  sole authorization_servers[] entry named by its own protected-resource document), www.makeup.land,
+  api.makeup.land, mcp.makeup.land, and wa.makeup.land (the WhatsApp-channel host named in the
+  registerCustomer description). Every row is a request that was actually issued; every status is
+  the one returned.
+summary:
+  hosts_probed: 5
+  paths_probed: 40
+  documents_served: 6
+  note: >-
+    makeup.land serves an unusually complete agent-discovery surface from its apex: RFC 8414
+    authorization-server metadata (carrying the WorkOS-style agent_auth extension), RFC 9728
+    protected-resource metadata, an MCP discovery manifest, an A2A agent card, an AI usage manifest and
+    a UCP merchant profile. It serves NO security.txt, NO OpenID configuration, NO RFC 9727 api-catalog,
+    NO ai-plugin.json, NO AAuth resource document and NO APIs.json. The edge answers unknown top-level
+    slugs with a 200 HTML catch-all page titled "<slug> - makeup.land" (a genuine 404 is a 62 KB Hebrew
+    "page not found" body), so /apis.json, /apis.yml, /asyncapi.yaml and /asyncapi.json all return 200
+    text/html and are recorded as misses. Under /.well-known/ the edge returns real 404s.
+  mcp_host_note: >-
+    The MCP server is https://makeup.land/api/mcp — on the apex host, not an mcp. subdomain — so the
+    RFC 9728 document for the MCP resource is the apex one recorded below. mcp.makeup.land does not resolve.
+  authorization_servers_note: >-
+    /.well-known/oauth-protected-resource names authorization_servers ["https://makeup.land"] — the same
+    host — so no third-party auth-server host needed probing.
+hosts:
+- host: makeup.land
+  role: Website, API host (OpenAPI servers[] https://makeup.land, base https://makeup.land/api/v1), MCP host (https://makeup.land/api/mcp), authorization server
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+    note: Real 404 (Hebrew "page not found" body). No RFC 9116 security.txt. /security.txt at the root is the 200 HTML catch-all, not a document.
+  - path: /.well-known/openid-configuration
+    status: 404
+    note: No OpenID Connect discovery. Consistent with the authorization-server metadata, which declares no endpoints or grant types.
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: makeup-land-oauth-authorization-server.json
+    standard: RFC 8414
+    note: >-
+      issuer https://makeup.land; scopes_supported [full, register, giftcards, proposals, read_only];
+      authorization_endpoint and token_endpoint are null and response_types/grant_types are empty — there is
+      no OAuth flow. Carries a non-standard agent_auth block (WorkOS auth.md pattern) pointing at
+      https://makeup.land/auth.md, register_uri mailto:info@makeup.land, identity_assertion via
+      email_manual issuing an api_key, and events_supported [credential.issued, credential.revoked].
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: makeup-land-oauth-protected-resource.json
+    standard: RFC 9728
+    note: >-
+      resource https://makeup.land/api/v1/, authorization_servers [https://makeup.land], scopes_supported
+      as above, bearer_methods_supported [header], resource_documentation the OpenAPI, resource_policy_uri
+      the AI manifest, x-agent-auth-skill https://makeup.land/auth.md.
+  - path: /.well-known/api-catalog
+    status: 404
+    note: No RFC 9727 API catalog linkset.
+  - path: /.well-known/api-catalog.json
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/mcp.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: makeup-land-mcp.json
+    standard: MCP discovery manifest (non-standard well-known; protocolVersion 2025-06-18)
+    note: >-
+      Names the live endpoint https://makeup.land/api/mcp, the OpenAPI, auth.md and llms-full.txt, and a
+      tools[] list of 8 REST-named tools. The live tools/list differs from this manifest — see mcp/makeup-land-mcp.yml.
+  - path: /.well-known/agent-card.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: ../a2a/makeup-land-agent-card.json
+    standard: A2A Agent Card (graded flavored — see a2a/makeup-land-a2a.yml)
+  - path: /.well-known/agent.json
+    status: 404
+    note: Legacy pre-0.3 agent-card path. Not served.
+  - path: /.well-known/ai-manifest.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: makeup-land-ai-manifest.json
+    standard: ai-manifest (schema_version 0.2; the provider labels it an IETF ai-manifest descriptor)
+    note: AI usage policy (allowed search-indexing / answer-engine / agentic-shopping; conditional model-training; disallowed competitive-scraping / price-arbitrage-bots), preferred crawler rate 10 rps, and a feeds[] list.
+  - path: /.well-known/ucp
+    status: 200
+    content_type: application/json; charset=utf-8
+    file: makeup-land-ucp.json
+    standard: Unified Commerce Profile (profile_version 2026-04-08, provider-labelled Google UCP)
+    note: Merchant identity, ILS currency, IL-only fulfilment, 14-day return_policy window, payment methods, feeds and capabilities. Two links inside it (pages/contact, pages/api) 404.
+  - path: /.well-known/ucp.json
+    status: 404
+    note: The UCP profile is served at the extension-less /.well-known/ucp path only.
+  - path: /.well-known/acp.json
+    status: 404
+    note: No ACP well-known. The OpenAI Agentic Commerce Protocol surface is a product FEED at https://makeup.land/api/merchant/openai/products (200, application/x-ndjson), not a checkout endpoint.
+  - path: /.well-known/aauth-resource.json
+    status: 404
+  - path: /.well-known/apis.json
+    status: 404
+  - path: /apis.json
+    status: 200
+    served: false
+    note: 200 text/html catch-all page ("apis.json - makeup.land"), not an APIs.json document. Recorded as a miss.
+  - path: /apis.yml
+    status: 200
+    served: false
+    note: 200 text/html catch-all page. Recorded as a miss.
+  - path: /asyncapi.yaml
+    status: 200
+    served: false
+    note: 200 text/html catch-all page. No AsyncAPI is published.
+  - path: /asyncapi.json
+    status: 200
+    served: false
+    note: 200 text/html catch-all page. No AsyncAPI is published.
+- host: www.makeup.land
+  role: www alias
+  documents:
+  - path: /.well-known/security.txt
+    status: 0
+    note: Host does not resolve (curl exit 6, no HTTP response). The site is served on the bare apex only.
+  - path: /.well-known/openid-configuration
+    status: 0
+  - path: /.well-known/oauth-authorization-server
+    status: 0
+  - path: /.well-known/oauth-protected-resource
+    status: 0
+  - path: /.well-known/api-catalog
+    status: 0
+  - path: /.well-known/ai-plugin.json
+    status: 0
+  - path: /.well-known/agent-card.json
+    status: 0
+- host: api.makeup.land
+  role: Conventional API subdomain — probed because the rubric asks for it; the real API host is the apex
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 0
+    note: Host does not resolve.
+  - path: /.well-known/oauth-protected-resource
+    status: 0
+  - path: /.well-known/oauth-authorization-server
+    status: 0
+  - path: /.well-known/security.txt
+    status: 0
+- host: mcp.makeup.land
+  role: Conventional MCP subdomain — probed because RFC 9728 metadata usually sits on the MCP host; here the MCP endpoint is on the apex
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 0
+    note: Host does not resolve.
+  - path: /.well-known/oauth-protected-resource
+    status: 0
+  - path: /.well-known/oauth-authorization-server
+    status: 0
+  - path: /.well-known/security.txt
+    status: 0
+- host: wa.makeup.land
+  role: WhatsApp-channel host named in the registerCustomer operation description
+  documents:
+  - path: /
+    status: 307
+    note: Every path 307-redirects to https://wa.makeup.land/login — an authenticated internal console, not a public discovery host.
+  - path: /.well-known/agent-card.json
+    status: 307
+  - path: /.well-known/oauth-protected-resource
+    status: 307

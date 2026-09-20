@@ -1,0 +1,36 @@
+{
+  "issuer": "https://makeup.land",
+  "authorization_endpoint": null,
+  "token_endpoint": null,
+  "scopes_supported": [
+    "full",
+    "register",
+    "giftcards",
+    "proposals",
+    "read_only"
+  ],
+  "response_types_supported": [],
+  "grant_types_supported": [],
+  "token_endpoint_auth_methods_supported": [],
+  "service_documentation": "https://makeup.land/openapi.json",
+  "op_policy_uri": "https://makeup.land/auth.md",
+  "agent_auth": {
+    "skill": "https://makeup.land/auth.md",
+    "register_uri": "mailto:info@makeup.land?subject=API%20access%20request",
+    "identity_types_supported": [
+      "identity_assertion"
+    ],
+    "identity_assertion": {
+      "methods": [
+        "email_manual"
+      ],
+      "credentials_issued": [
+        "api_key"
+      ]
+    },
+    "events_supported": [
+      "credential.issued",
+      "credential.revoked"
+    ]
+  }
+}

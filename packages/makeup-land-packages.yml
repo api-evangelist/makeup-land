@@ -1,0 +1,26 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  registry.npmjs.org search (makeup.land, makeupland), pypi.org/pypi/{makeup-land,makeupland,makeup_land}/json,
+  api.github.com search and the makeup-land GitHub org (3 repos), https://makeup.land/llms-full.txt and the
+  OpenAPI — all on 2026-09-19.
+package_count: 0
+official_sdk_count: 0
+packages: []
+note: >-
+  makeup.land publishes no client library, CLI or SDK in any registry. The GitHub org makeup-land holds a
+  metadata-only repo for the MCP server (makeup-land-mcp: README, server.json, smithery.yaml, glama.json —
+  no package.json, no releases) plus two forks of community registries. The docs show raw curl and fetch()
+  calls only, and recommend the third-party npm package mcp-remote as a stdio bridge to the hosted MCP
+  server; that package is not first-party and is not listed here. The registry publication that does exist
+  is the MCP server entry land.makeup/v1 on registry.modelcontextprotocol.io (recorded in mcp/).
+registries_checked:
+- registry: npm
+  query: makeup.land / makeupland
+  result: no packages
+- registry: pypi
+  query: makeup-land, makeupland, makeup_land
+  result: 404
+- registry: github
+  query: makeup.land; org makeup-land
+  result: makeup-land/makeup-land-mcp (metadata only, no code, no releases)

@@ -1,0 +1,176 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  https://makeup.land/openapi.json (info.description sections "Versioning & deprecation policy", "Error
+  handling", "Idempotency"; every operation's parameters and responses), https://makeup.land/auth.md,
+  https://makeup.land/llms-full.txt, https://makeup.land/llms-api.txt, https://makeup.land/pricing.md, the
+  Hebrew returns/cancellations page https://makeup.land/החזרות-והחלפות, and live unauthenticated responses
+  observed 2026-09-19.
+description: >-
+  How the makeup.land V1 REST API behaves across all 21 operations: bearer + phone authentication,
+  Idempotency-Key on every write, page-number pagination, the {error, error_code} envelope, per-endpoint
+  rate limits signalled with Retry-After, URI-path versioning with RFC 8594 sunset headers promised, and
+  what can be undone.
+
+base_url: https://makeup.land/api/v1
+api_style: REST over HTTPS, JSON requests and responses; Hebrew-primary catalog; monetary *_cents fields are integer agorot (100 = ₪1)
+
+authentication:
+  scheme: HTTP Bearer (Authorization Bearer ml_<hex24>) issued out-of-band by email; no OAuth flow
+  scopes: [full, register, giftcards, proposals]
+  flags: read_only (set at issuance; rejects every write with 403 read_only_token)
+  selector: phone (E.164) — NOT a credential; selects the customer on cart, gift-cards list, payment-links, best-deals and opportunities. Query string for GET/DELETE, JSON body for POST/PATCH.
+  anonymous: listProducts with catalog filters only; validateGiftCard
+  docs: https://makeup.land/auth.md
+  detail: authentication/makeup-land-authentication.yml
+  scopes_detail: scopes/makeup-land-scopes.yml
+
+idempotency:
+  supported: true
+  coverage: full
+  mechanism: Idempotency-Key request header
+  applies_to: All POST, PATCH and DELETE operations — 9 of 9 mutating operations declare the parameter in the OpenAPI.
+  scope:
+  - upsertCustomer
+  - patchCustomerTags
+  - clearCart
+  - addCartItem
+  - patchCartItem
+  - deleteCartItem
+  - redeemGiftCard
+  - registerCustomer
+  - submitProposals
+  key_format: Client-generated; UUIDv4 recommended, one per logical operation
+  required: false
+  retention: 24 hours
+  replay_behavior: >-
+    "Retries with the same key inside a 24h window are guaranteed to be either no-ops or replays of the
+    original response, never duplicate effects." (OpenAPI info.description)
+  conflict_behavior: Not documented (no statement on reusing a key with a different body).
+  replay_indicator: Not documented (no Idempotency-Replayed header or equivalent).
+  docs: https://makeup.land/llms-full.txt
+
+pagination:
+  style: page-number
+  request_params:
+    limit: 1-50 (default 20 on products per the MCP schema; "Default 10. Capped at 50." on orders)
+    page: 1-indexed integer
+  response_fields:
+    total: integer — total matches
+    page: integer — the page returned
+    has_more: boolean
+    partial: boolean (listProducts only) — true when post-filters such as hue_family under-filled the page, so the next page may still hold matches
+  paginated_operations: [listProducts, listRegistrations]
+  limited_only: [listOrders (limit), getCustomerBestDeals (limit)]
+  note: No cursor pagination and no Link headers.
+
+field_expansion:
+  supported: partial
+  mechanism: include=inventory on listProducts adds per-variant stock (bearer required); relevant_to_phone / phone add a per-customer reward projection and an echoed customer block.
+  sparse_fields: false
+
+metadata:
+  supported: false
+  note: No arbitrary key-value metadata on resources. Customers carry free-form tags (lower-cased strings) manipulated via patchCustomerTags.
+
+request_tracing:
+  request_id_header: null
+  note: No request-id header is documented or was observed on live responses. submitProposals accepts a caller-supplied request_id per proposal row for the caller's own correlation.
+
+versioning:
+  scheme: uri-path
+  current: v1
+  mechanism: /api/v1/ path prefix; breaking changes go to /api/v2/; additive changes land in place without notice
+  sunset_headers: Deprecation true + Sunset HTTP-date + Link rel=deprecation, at least 6 months ahead (RFC 8594 / RFC 9745) — policy stated, nothing deprecated yet
+  detail: lifecycle/makeup-land-lifecycle.yml
+
+error_envelope:
+  media_type: application/json
+  rfc9457: false
+  shape: '{ "error": string, "error_code": enum, ...extras }'
+  stable_field: error_code (21 values; optional today, required in the next major)
+  detail: errors/makeup-land-problem-types.yml
+
+rate_limits:
+  signal_status: 429
+  error_code: rate_limited
+  headers: [Retry-After]
+  quota_headers: none documented
+  published_limits: 60/min per token (customer opportunities); 60/min per IP (gift-card validate, best deals)
+  detail: rate-limits/makeup-land-rate-limits.yml
+
+webhooks:
+  outbound: Partner webhook fired by registerCustomer when created is true; delivery status (sent / skipped / failed / disabled, status_code, attempts) is returned inline and on getRegistration. Payload and signing are undocumented.
+  detail: asyncapi/makeup-land-webhooks.yml
+
+dry_run:
+  supported: false
+  note: No dry-run, preview or validate-only mode on any write. getCart's reward_projection fields and listProducts' reward_earned are the closest thing to a rehearsal — they show what a purchase would earn without writing.
+
+reversibility:
+  grade: documented
+  grade_basis: >-
+    Reversal operations exist for the cart write surface (documented in the contract) but no window is
+    stated for any of them, and the API's other writes have no reversal operation. A stated window would
+    be needed for "verified"; none is published, so the grade is documented.
+  write_surface: [upsertCustomer, patchCustomerTags, addCartItem, patchCartItem, deleteCartItem, clearCart, redeemGiftCard, registerCustomer, submitProposals]
+  paths:
+  - action: addCartItem
+    reversal: deleteCartItem (remove the line) or clearCart (drop the whole cart); patchCartItem reverses a quantity or tender change
+    reversal_operations: [deleteCartItem, clearCart, patchCartItem]
+    window: not stated — the cart is a persistent draft ("most-recently-updated cart"); no expiry is documented
+    docs: https://makeup.land/openapi.json
+  - action: patchCartItem
+    reversal: patchCartItem again (quantity, variant_id, tender, gift_personalization are all re-settable)
+    reversal_operations: [patchCartItem]
+    window: not stated
+    docs: https://makeup.land/openapi.json
+  - action: patchCustomerTags (add / replace)
+    reversal: patchCustomerTags with remove (or replace back); tags_added / tags_removed are echoed so the exact inverse is known
+    reversal_operations: [patchCustomerTags]
+    window: not stated
+    docs: https://makeup.land/openapi.json
+  - action: redeemGiftCard
+    reversal: >-
+      none in the API. pricing.md §6 states "Gift-card refunds: balance restored to the originating card" as part of the human refund process, not an operation.
+    reversal_operations: []
+    window: not stated for the API
+    docs: https://makeup.land/pricing.md
+  - action: registerCustomer / upsertCustomer
+    reversal: none — there is no delete-customer or cancel-registration operation; upsertCustomer can overwrite name/email/tags but not remove the record
+    reversal_operations: []
+    window: n/a
+  - action: submitProposals
+    reversal: a later proposal for the same entity/field supersedes the earlier one (the response reports superseded counts); no delete
+    reversal_operations: [submitProposals]
+    window: not stated
+  commerce_reversals_outside_the_api:
+    note: >-
+      Orders are read-only over the API (listOrders); creation, cancellation and refund happen in the
+      storefront and by customer service. The published policy is recorded for context and NOT as API
+      reversibility.
+    policy:
+    - rule: Return or exchange within 14 days of receipt, unopened, in original packaging; not for sale, outlet or personalised items
+      source: https://makeup.land/החזרות-והחלפות (the UCP profile encodes return_policy.window_days 14)
+    - rule: Cancel an order any time before it has shipped and reached the customer
+      source: https://makeup.land/החזרות-והחלפות
+    - rule: Approved refunds go to the original payment instrument within up to 7 business days of the warehouse receiving the item; pricing.md says card refunds take 5-10 business days, ℳ-credit refunds are instant, gift-card refunds restore the card balance
+      source: https://makeup.land/החזרות-והחלפות and https://makeup.land/pricing.md
+    - rule: ℳ-credits earned on a refunded or cancelled order are clawed back proportionally
+      source: https://makeup.land/pricing.md and https://makeup.land/תוכנית-צבירה
+
+other_conventions:
+- name: Money
+  detail: ILS; fields ending in _cents are integer agorot; ℳ-credit prices (credit_price) are also agorot; product price / compare_at_price are decimal ILS.
+- name: Dual tender
+  detail: Cart lines carry tender ils | credits; credits-mode lines do not earn rewards; variants with credit_price null are ILS-only (409 tender_unavailable otherwise).
+- name: Phone encoding
+  detail: E.164 with the + URL-encoded as %2B in query strings.
+- name: Language
+  detail: Catalog tags are Hebrew strings matched exactly (case-insensitive, trimmed); use q for cross-lingual semantic search. Error strings may be English or Hebrew.
+- name: Timestamps
+  detail: ISO-8601 UTC strings (e.g. 2026-05-23T12:34:56.789Z).
+- name: Shade matching
+  detail: near_hex accepts one hex or a CSV of up to 8; delta_e_max default 80 (single) / 200 (multi); coverage all|any for multi-hex palettes; each product returns shade_match {hex, delta_e} (CIE ΔE 2000).
+- name: CORS
+  detail: Live responses carry access-control-allow-origin * with GET, OPTIONS and Authorization, Content-Type allowed.

@@ -1,0 +1,21 @@
+{
+  "resource": "https://makeup.land/api/v1/",
+  "resource_name": "makeup.land V1 API",
+  "resource_documentation": "https://makeup.land/openapi.json",
+  "resource_policy_uri": "https://makeup.land/.well-known/ai-manifest.json",
+  "resource_tos_uri": "https://makeup.land/auth.md",
+  "authorization_servers": [
+    "https://makeup.land"
+  ],
+  "scopes_supported": [
+    "full",
+    "register",
+    "giftcards",
+    "proposals",
+    "read_only"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ],
+  "x-agent-auth-skill": "https://makeup.land/auth.md"
+}

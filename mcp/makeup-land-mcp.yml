@@ -1,0 +1,137 @@
+generated: '2026-09-19'
+method: probed
+status: live
+name: makeup.land MCP server
+url: https://makeup.land/api/mcp
+source: >-
+  Live JSON-RPC probes of https://makeup.land/api/mcp on 2026-09-19 (initialize and tools/list, both
+  anonymous, both HTTP 200 text/event-stream), the provider's /.well-known/mcp.json manifest, the
+  first-party GitHub repo https://github.com/makeup-land/makeup-land-mcp (README, server.json,
+  smithery.yaml, glama.json) and the Official MCP Registry entry land.makeup/v1.
+deployment:
+  mode: remote
+  endpoint: https://makeup.land/api/mcp
+  install: null
+  package: null
+  auth: api-key
+  auth_note: >-
+    initialize, tools/list, list_products (catalog filters) and validate_gift_card work anonymously.
+    Every customer-data tool and list_brands require `Authorization: Bearer ml_<hex>`, a long-lived
+    bearer issued by a human over email (shop@makeup.land / info@makeup.land) — the provider's own
+    README says "NOT OAuth despite Smithery's autodetection". Phone-keyed tools need the bearer AND an
+    E.164 phone argument. See authentication/ and skills/makeup-land-auth.md (the provider's auth.md).
+  verified: probed
+  client_bridge: >-
+    For stdio-only clients (Claude Desktop, Cursor) the README documents the third-party `npx -y mcp-remote
+    https://makeup.land/api/mcp [--header Authorization:Bearer ml_...]` bridge. mcp-remote is not a
+    makeup.land package; there is no first-party stdio server.
+protocol:
+  version: '2025-06-18'
+  version_source: initialize result (protocolVersion) — matches the manifest and the GitHub README
+  transport: streamable-http
+  stateless: true
+  streaming: false
+  server_capabilities:
+    tools:
+      listChanged: true
+  server_info:
+    name: makeup.land
+    title: makeup.land MCP server
+    version: 1.0.0
+  instructions: >-
+    makeup.land — Israeli professional cosmetics retailer. Use this MCP server to search the product catalog
+    (with ΔE shade matching), look up customers by phone, fetch carts and orders, and validate gift cards. Most
+    customer-data tools require BOTH a bearer token and a phone identifier — the bearer authenticates the
+    caller, the phone selects the customer. Catalog tools (list_products) work anonymously for
+    tag/brand/near_hex/sort filters.
+tools_file: mcp/makeup-land-mcp-tools.json
+tool_count: 8
+tools:
+- name: list_products
+  title: List / search products
+  auth: anonymous for q / tag / brand / near_hex / hue_family / sort; bearer required when phone is passed
+  rest_operation: listProducts
+  input_schema: q, tag, brand, near_hex (^#?[0-9A-Fa-f]{6}$), hue_family (enum), sort (enum), limit (1-50), page, phone (^\+\d{6,15}$)
+  execution: taskSupport forbidden
+- name: list_brands
+  title: List all brands
+  auth: bearer
+  rest_operation: listBrands
+- name: validate_gift_card
+  title: Validate a gift card code
+  auth: public (gated on knowledge of the code)
+  rest_operation: validateGiftCard
+- name: get_customer
+  title: Lookup customer by phone
+  auth: bearer
+  rest_operation: getCustomer
+- name: get_cart
+  title: Fetch a customer's cart
+  auth: bearer + phone
+  rest_operation: getCart
+- name: list_orders
+  title: List a customer's orders
+  auth: bearer + phone
+  rest_operation: listOrders
+- name: list_payment_links
+  title: List pending payment links
+  auth: bearer + phone
+  rest_operation: listPaymentLinks
+- name: get_customer_best_deals
+  title: Personalised best deals for a customer
+  auth: bearer + phone
+  rest_operation: getCustomerBestDeals
+manifest_drift:
+  manifest: well-known/makeup-land-mcp.json
+  note: >-
+    The /.well-known/mcp.json manifest lists 8 tools under REST-style camelCase names (listProducts,
+    listBrands, getCustomer, getCart, addCartItem, listOrders, validateGiftCard, registerCustomer). The live
+    server exposes 8 tools under snake_case names and a DIFFERENT set: it does NOT expose addCartItem or
+    registerCustomer (the README confirms v1 is read-only — "No cart writes, no gift-card redeem, no customer
+    registration. v2 adds these"), and it DOES expose list_payment_links and get_customer_best_deals, which
+    the manifest omits. An agent that trusts the manifest will try two tools that do not exist and miss two
+    that do. The live tools/list is the contract; the crosswalk binds the live names.
+  manifest_only: [addCartItem, registerCustomer]
+  live_only: [list_payment_links, get_customer_best_deals]
+limitations_stated_by_provider:
+- Read-only in v1 (no cart writes, gift-card redeem or registration) — https://github.com/makeup-land/makeup-land-mcp#limitations-of-v1
+- Stateless — every request initialises a fresh MCP session
+- Synchronous — tools/call blocks on the V1 fetch; semantic search up to 2s
+- No SSE streaming for partial results
+error_semantics: >-
+  Tool errors propagate the V1 REST envelope {error, error_code} as text content with isError true; stable
+  error_code values are the OpenAPI Error enum — see errors/makeup-land-problem-types.yml.
+registries:
+- registry: Official MCP Registry
+  name: land.makeup/v1
+  url: https://registry.modelcontextprotocol.io/v0/servers?search=makeup
+  status: active
+  published_at: '2026-05-24T18:23:47Z'
+  remotes: [https://makeup.land/api/mcp]
+  verified: probed (search result 200, entry present)
+  server_json: mcp/makeup-land-registry-server.json
+- registry: GitHub
+  url: https://github.com/makeup-land/makeup-land-mcp
+  note: First-party metadata + integrator guide repo (MIT metadata; server code proprietary and not published). Contains server.json, smithery.yaml, glama.json, MCP.md. No releases, no package.
+  verified: searched
+- registry: Smithery
+  url: https://smithery.ai/?q=makeup.land
+  verified: claimed by the README; not verified by this pass
+x-evidence:
+  probes:
+  - url: https://makeup.land/api/mcp
+    method: POST initialize
+    http_status: 200
+    content_type: text/event-stream
+    result: protocolVersion 2025-06-18, serverInfo makeup.land 1.0.0, capabilities.tools.listChanged true
+  - url: https://makeup.land/api/mcp
+    method: POST tools/list
+    http_status: 200
+    content_type: text/event-stream
+    result: 8 tools with inputSchema (draft-07), saved verbatim to mcp/makeup-land-mcp-tools.json
+  - url: https://makeup.land/.well-known/mcp.json
+    http_status: 200
+  - url: https://registry.modelcontextprotocol.io/v0/servers?search=makeup
+    http_status: 200
+    result: land.makeup/v1 1.0.0 active
+crosswalk: mcp/makeup-land-tool-crosswalk.yml
