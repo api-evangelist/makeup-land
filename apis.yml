@@ -27,7 +27,7 @@ tags:
 - Cosmetics
 - Beauty
 - Retail
-- eCommerce
+- E-Commerce
 - Shopping
 - Loyalty
 - Gift Cards
@@ -68,7 +68,7 @@ apis:
   - Shopping Cart
   - Gift Cards
   - Loyalty
-  - Orders
+  - Order
   tags_raw:
   - Cosmetics
   - Product Search
@@ -163,7 +163,7 @@ apis:
   tags:
   - Agentic Commerce
   - Product Feeds
-  - eCommerce
+  - E-Commerce
   tags_raw:
   - Agentic Commerce
   - Product Feeds
