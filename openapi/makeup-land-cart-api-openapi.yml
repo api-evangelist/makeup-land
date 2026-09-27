@@ -1,0 +1,962 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Cart API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Cart across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Cart
+  description: Phone-keyed cart read/write (ILS + ℳ-credits)
+paths:
+  /api/v1/cart:
+    get:
+      operationId: getCart
+      summary: Read the current cart for a phone-keyed customer
+      description: 'Returns the most-recently-updated cart for the customer. Credits-mode lines do NOT contribute to `reward_projection_*` per the rewards invariant. Returns `cart_id: null` when the customer has no cart yet.'
+      tags:
+      - Cart
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: phone
+        in: query
+        required: true
+        description: Phone number in E.164 format, e.g. +972501234567
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Phone number in E.164 format, e.g. +972501234567
+      responses:
+        '200':
+          description: Current cart
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  cart_id:
+                    anyOf:
+                    - type: string
+                      minLength: 1
+                    - type: 'null'
+                  customer_id:
+                    type: string
+                    minLength: 1
+                  updated_at:
+                    anyOf:
+                    - type: string
+                      description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                    - type: 'null'
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        line_item_id:
+                          type: string
+                          minLength: 1
+                        product_id:
+                          type: string
+                          minLength: 1
+                        variant_id:
+                          type: string
+                          minLength: 1
+                        product_title:
+                          type: string
+                        variant_title:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        brand_slug:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        product_slug:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        image:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        price:
+                          type: number
+                          minimum: 0
+                          description: Per-unit ILS price
+                        tender:
+                          type: string
+                          enum:
+                          - ils
+                          - credits
+                          description: Per-line tender. `ils` debits the order subtotal in shekels; `credits` debits the customer's ℳ-credit wallet. A variant must be priceable in the requested tender or the request is rejected with `tender_unavailable`.
+                        credit_price:
+                          anyOf:
+                          - type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                            description: Amount in integer agorot (100 = ₪1)
+                          - type: 'null'
+                          description: Per-unit ℳ-credit price in agorot, null when ILS-only
+                        quantity:
+                          type: integer
+                          exclusiveMinimum: 0
+                          maximum: 9007199254740991
+                        product_tags:
+                          type: array
+                          items:
+                            type: string
+                        track_quantity:
+                          type: boolean
+                        gift_personalization:
+                          anyOf:
+                          - type: object
+                            properties: {}
+                            additionalProperties: {}
+                          - type: 'null'
+                          description: Gift-message / engraving payload, structure varies by product
+                        reward_projection_cents:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                          description: Projected reward earn for this line if checked out today
+                      required:
+                      - line_item_id
+                      - product_id
+                      - variant_id
+                      - product_title
+                      - variant_title
+                      - brand_slug
+                      - product_slug
+                      - image
+                      - price
+                      - tender
+                      - credit_price
+                      - quantity
+                      - product_tags
+                      - track_quantity
+                      - gift_personalization
+                      - reward_projection_cents
+                      additionalProperties: false
+                  reward_projection_total_cents:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                    description: Amount in integer agorot (100 = ₪1)
+                required:
+                - cart_id
+                - customer_id
+                - updated_at
+                - items
+                - reward_projection_total_cents
+                additionalProperties: false
+        '400':
+          description: Invalid phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    delete:
+      operationId: clearCart
+      summary: Clear all carts for a customer
+      description: Idempotent — deletes ALL carts (not only the most-recent one) for the phone-keyed customer. Useful after checkout or when the customer asks to start over.
+      tags:
+      - Cart
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: phone
+        in: query
+        required: true
+        description: Phone number in E.164 format, e.g. +972501234567
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Phone number in E.164 format, e.g. +972501234567
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      responses:
+        '200':
+          description: Carts cleared
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  cart_id:
+                    anyOf:
+                    - type: string
+                      minLength: 1
+                    - type: 'null'
+                  cleared_cart_ids:
+                    type: array
+                    items:
+                      type: string
+                      minLength: 1
+                required:
+                - ok
+                - cart_id
+                - cleared_cart_ids
+                additionalProperties: false
+        '400':
+          description: Invalid phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/cart/items:
+    post:
+      operationId: addCartItem
+      summary: Add or increment a cart line item
+      description: Upserts on `(product_id, variant_id, tender)` — same triple = quantity increments rather than creating a duplicate row. Enforces stock (skipped when `inventory_policy='continue'` or `track_quantity=false`) and, in credits-mode, a wallet-balance gate.
+      tags:
+      - Cart
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                phone:
+                  description: Required if not supplied as query param
+                  type: string
+                  pattern: ^\+\d{6,15}$
+                product_id:
+                  type: string
+                  minLength: 1
+                variant_id:
+                  type: string
+                  minLength: 1
+                quantity:
+                  type: integer
+                  exclusiveMinimum: 0
+                  maximum: 9007199254740991
+                tender:
+                  description: Defaults to `ils`
+                  type: string
+                  enum:
+                  - ils
+                  - credits
+                gift_personalization:
+                  type: object
+                  properties: {}
+                  additionalProperties: {}
+              required:
+              - product_id
+              - variant_id
+              - quantity
+              additionalProperties: false
+      responses:
+        '200':
+          description: Line upserted
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  cart_id:
+                    type: string
+                    minLength: 1
+                  line_item_id:
+                    type: string
+                    minLength: 1
+                  quantity:
+                    type: integer
+                    exclusiveMinimum: 0
+                    maximum: 9007199254740991
+                required:
+                - ok
+                - cart_id
+                - line_item_id
+                - quantity
+                additionalProperties: false
+        '400':
+          description: Validation error (invalid_json, invalid_quantity, variant_mismatch, tender_unavailable, product_unavailable)
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '409':
+          description: Insufficient stock or insufficient credits
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/cart/items/{lineItemId}:
+    patch:
+      operationId: patchCartItem
+      summary: Update an existing cart line item
+      description: 'Mutate quantity, swap variant within the same product, switch tender, or update gift personalization. Pre-gates on UNIQUE collision `(cart_id, product_id, variant_id, tender)`: a tender/variant swap that would collide with another line returns `409 line_collision` so the client can merge first.'
+      tags:
+      - Cart
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: lineItemId
+        in: path
+        required: true
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                phone:
+                  type: string
+                  pattern: ^\+\d{6,15}$
+                  description: Phone number in E.164 format, e.g. +972501234567
+                quantity:
+                  type: integer
+                  exclusiveMinimum: 0
+                  maximum: 9007199254740991
+                variant_id:
+                  description: Must belong to the same product as the current line
+                  type: string
+                  minLength: 1
+                tender:
+                  type: string
+                  enum:
+                  - ils
+                  - credits
+                  description: Per-line tender. `ils` debits the order subtotal in shekels; `credits` debits the customer's ℳ-credit wallet. A variant must be priceable in the requested tender or the request is rejected with `tender_unavailable`.
+                gift_personalization:
+                  anyOf:
+                  - type: object
+                    properties: {}
+                    additionalProperties: {}
+                  - type: 'null'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Line updated
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  cart_id:
+                    type: string
+                    minLength: 1
+                  line_item_id:
+                    type: string
+                    minLength: 1
+                required:
+                - ok
+                - cart_id
+                - line_item_id
+                additionalProperties: false
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Line item not found (or not owned)
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '409':
+          description: Insufficient stock, insufficient credits, or line collision
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    delete:
+      operationId: deleteCartItem
+      summary: Remove a cart line item
+      description: Idempotent. Removing an unknown line item also returns 200.
+      tags:
+      - Cart
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: lineItemId
+        in: path
+        required: true
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          minLength: 1
+      - name: phone
+        in: query
+        required: true
+        description: Phone number in E.164 format, e.g. +972501234567
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Phone number in E.164 format, e.g. +972501234567
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      responses:
+        '200':
+          description: Line removed
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  cart_id:
+                    type: string
+                    minLength: 1
+                  line_item_id:
+                    type: string
+                    minLength: 1
+                required:
+                - ok
+                - cart_id
+                - line_item_id
+                additionalProperties: false
+        '400':
+          description: Invalid phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Line item not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

@@ -1,0 +1,448 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Orders API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Orders across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Orders
+  description: Customer order history
+paths:
+  /api/v1/orders:
+    get:
+      operationId: listOrders
+      summary: List a customer's orders
+      description: Returns the most recent orders for the customer identified by `phone` (E.164) or `email`. Exactly one identifier is required. Line items include per-line tender mode and ℳ-credit debit; payment status is the read-time projected value.
+      tags:
+      - Orders
+      security:
+      - bearerAuth:
+        - full
+      parameters:
+      - name: phone
+        in: query
+        required: false
+        description: Customer phone, E.164. Mutually exclusive with `email`.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Customer phone, E.164. Mutually exclusive with `email`.
+          type: string
+          pattern: ^\+\d{6,15}$
+      - name: email
+        in: query
+        required: false
+        description: Customer email. Mutually exclusive with `phone`.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Customer email. Mutually exclusive with `phone`.
+          type: string
+          format: email
+          pattern: ^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+      - name: limit
+        in: query
+        required: false
+        description: Max orders to return. Default 10.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Max orders to return. Default 10.
+          type: integer
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: Customer order history
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 1
+                        order_number:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                        order_number_text:
+                          type: string
+                          description: Display order number, e.g. `#1042`
+                        email:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        phone:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        order_status:
+                          type: string
+                        payment_status:
+                          type: string
+                          description: Projected payment status — read-only view that maps unpaid orders with failed payments to `payment_failed` while leaving DB state untouched.
+                        fulfillment_status:
+                          type: string
+                        return_status:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        subtotal:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        discount:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        shipping:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        total:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        refunded_amount:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        customer_name:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        shipping_city:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        cancelled_at:
+                          anyOf:
+                          - type: string
+                            description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                          - type: 'null'
+                        payment_method:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        created_at:
+                          type: string
+                          description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                        line_items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              product_id:
+                                anyOf:
+                                - type: string
+                                  minLength: 1
+                                - type: 'null'
+                              variant_id:
+                                anyOf:
+                                - type: string
+                                  minLength: 1
+                                - type: 'null'
+                              product_title:
+                                type: string
+                              variant_title:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              sku:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              quantity:
+                                type: integer
+                                minimum: 0
+                                maximum: 9007199254740991
+                              price:
+                                type: number
+                                minimum: 0
+                                description: Amount in ILS as a decimal number (e.g. 12.50)
+                              total:
+                                type: number
+                                minimum: 0
+                                description: Amount in ILS as a decimal number (e.g. 12.50)
+                              tender:
+                                type: string
+                                enum:
+                                - ils
+                                - credits
+                                description: Per-line tender mode
+                              credit_amount_paid_cents:
+                                anyOf:
+                                - type: integer
+                                  minimum: 0
+                                  maximum: 9007199254740991
+                                - type: 'null'
+                                description: ℳ-credit amount debited for this line, when credits-mode
+                            required:
+                            - product_id
+                            - variant_id
+                            - product_title
+                            - variant_title
+                            - sku
+                            - quantity
+                            - price
+                            - total
+                            - tender
+                            - credit_amount_paid_cents
+                            additionalProperties: {}
+                        shipments:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                minLength: 1
+                              carrier:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              tracking_number:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              status:
+                                type: string
+                              delivered_at:
+                                anyOf:
+                                - type: string
+                                  description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                                - type: 'null'
+                            required:
+                            - id
+                            - carrier
+                            - tracking_number
+                            - status
+                            - delivered_at
+                            additionalProperties: {}
+                      required:
+                      - id
+                      - order_number
+                      - order_number_text
+                      - email
+                      - phone
+                      - order_status
+                      - payment_status
+                      - fulfillment_status
+                      - return_status
+                      - subtotal
+                      - discount
+                      - shipping
+                      - total
+                      - refunded_amount
+                      - customer_name
+                      - shipping_city
+                      - cancelled_at
+                      - payment_method
+                      - tags
+                      - created_at
+                      - line_items
+                      - shipments
+                      additionalProperties: false
+                required:
+                - orders
+                additionalProperties: false
+        '400':
+          description: Missing identifier or invalid phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '401':
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '403':
+          description: Token scope does not permit this endpoint
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

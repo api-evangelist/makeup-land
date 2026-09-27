@@ -1,0 +1,176 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Brands API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Brands across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Brands
+  description: Brand directory
+paths:
+  /api/v1/brands:
+    get:
+      operationId: listBrands
+      summary: List all brands with product counts
+      description: Returns every brand surfaced on the storefront, sorted server-side. Use the `slug` value to look up products via `/api/v1/products?brand=`.
+      tags:
+      - Brands
+      security:
+      - bearerAuth:
+        - full
+      responses:
+        '200':
+          description: Brand directory
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  brands:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: English brand name
+                        name_he:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          description: Hebrew brand name
+                        slug:
+                          type: string
+                          description: URL-safe slug, e.g. `bali-body`
+                        logo:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          description: Logo URL or null
+                        product_count:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                      required:
+                      - name
+                      - name_he
+                      - slug
+                      - logo
+                      - product_count
+                      additionalProperties: false
+                required:
+                - brands
+                additionalProperties: false
+        '401':
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

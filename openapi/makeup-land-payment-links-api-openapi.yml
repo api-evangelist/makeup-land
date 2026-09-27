@@ -1,0 +1,203 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Payment Links API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Payment Links across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Payment Links
+  description: Outstanding payment requests
+paths:
+  /api/v1/payment-links:
+    get:
+      operationId: listPaymentLinks
+      summary: Outstanding payment links for a customer
+      description: Returns pending `payment_requests` for unpaid / partially-paid / partially-refunded orders belonging to the phone-keyed customer. URLs use the production domain so the result is safe to forward via WhatsApp without rewrite.
+      tags:
+      - Payment Links
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: phone
+        in: query
+        required: true
+        description: Customer phone, E.164 format. Required.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Customer phone, E.164 format. Required.
+      responses:
+        '200':
+          description: List of outstanding payment requests
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  payment_links:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                          description: Opaque token for the public payment page
+                        url:
+                          type: string
+                          format: uri
+                          description: Full customer-facing URL on the production domain
+                        amount:
+                          type: number
+                          minimum: 0
+                          description: Outstanding amount in ILS
+                        currency:
+                          type: string
+                          enum:
+                          - ILS
+                          description: ISO 4217 currency code
+                        method:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          description: Payment method hint, e.g. `card` / `bit` / `bank_transfer`
+                        order_id:
+                          type: string
+                          minLength: 1
+                        order_number:
+                          type: string
+                        created_at:
+                          type: string
+                          description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                        updated_at:
+                          type: string
+                          description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                      required:
+                      - token
+                      - url
+                      - amount
+                      - currency
+                      - method
+                      - order_id
+                      - order_number
+                      - created_at
+                      - updated_at
+                      additionalProperties: false
+                required:
+                - payment_links
+                additionalProperties: false
+        '400':
+          description: Invalid or missing phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

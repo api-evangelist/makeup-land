@@ -1,0 +1,629 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Gift Cards API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Gift Cards across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Gift Cards
+  description: Recipient cards, validation, redemption
+paths:
+  /api/v1/gift-cards:
+    get:
+      operationId: listGiftCards
+      summary: List gift cards owned by a customer (as recipient)
+      description: Returns recipient-side gift cards for the phone-keyed customer. Card codes are deliberately omitted — clients should redeem via `POST /gift-cards/redeem` using the code the customer pasted, not by reading the code out of this response.
+      tags:
+      - Gift Cards
+      security:
+      - bearerAuth:
+        - full
+        phoneIdentifier: []
+      parameters:
+      - name: phone
+        in: query
+        required: true
+        description: Customer phone, E.164. Required.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Customer phone, E.164. Required.
+      responses:
+        '200':
+          description: Cards belonging to the customer
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 1
+                        amount:
+                          type: number
+                          minimum: 0
+                          description: Original face value in ILS
+                        balance:
+                          type: number
+                          minimum: 0
+                          description: Remaining balance in ILS
+                        currency:
+                          type: string
+                          enum:
+                          - ILS
+                          description: ISO 4217 currency code
+                        status:
+                          type: string
+                          enum:
+                          - active
+                          - depleted
+                        issued_at:
+                          type: string
+                          description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                        sender_name:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        greeting_url:
+                          anyOf:
+                          - type: string
+                            format: uri
+                          - type: 'null'
+                          description: Customer-facing greeting page URL on the production domain
+                        is_partner_issued:
+                          type: boolean
+                        order_id:
+                          anyOf:
+                          - type: string
+                            minLength: 1
+                          - type: 'null'
+                      required:
+                      - id
+                      - amount
+                      - balance
+                      - currency
+                      - status
+                      - issued_at
+                      - sender_name
+                      - greeting_url
+                      - is_partner_issued
+                      - order_id
+                      additionalProperties: false
+                required:
+                - cards
+                additionalProperties: false
+        '400':
+          description: Invalid phone
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/gift-cards/validate:
+    get:
+      operationId: validateGiftCard
+      summary: Public gift-card balance / validity check
+      description: Public, unauthenticated endpoint. Rate-limited per source IP. Returns balance + status for a given code. Use this from checkout flows to verify a card before redeeming.
+      tags:
+      - Gift Cards
+      security: []
+      parameters:
+      - name: code
+        in: query
+        required: true
+        description: Gift card code. Dashes are accepted (case-insensitive); normalized server-side.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^GML[A-Z0-9-]{12,16}$
+          description: Gift card code. Dashes are accepted (case-insensitive); normalized server-side.
+      responses:
+        '200':
+          description: Gift card snapshot
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: '`active` / `depleted` / similar'
+                  balance_cents:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                    description: Amount in integer agorot (100 = ₪1)
+                  initial_amount_cents:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                    description: Amount in integer agorot (100 = ₪1)
+                  currency:
+                    type: string
+                    enum:
+                    - ILS
+                    description: ISO 4217 currency code
+                required:
+                - status
+                - balance_cents
+                - initial_amount_cents
+                - currency
+                additionalProperties: false
+        '400':
+          description: Missing or malformed code
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '429':
+          description: Rate limit exceeded (60/min per IP)
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+      x-rate-limit:
+        max: 60
+        windowSeconds: 60
+        keyedOn: source-ip
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/gift-cards/redeem:
+    post:
+      operationId: redeemGiftCard
+      summary: Apply a gift card to an order
+      description: Deducts `amount_cents` from the gift card and binds the redemption to the order. Idempotent against the (code, order_id, amount_cents) tuple at the service layer.
+      tags:
+      - Gift Cards
+      security:
+      - bearerAuth:
+        - full
+        - giftcards
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                code:
+                  type: string
+                  pattern: ^GML[A-Z0-9-]{12,16}$
+                  description: Gift card code in `GML-XXXX-XXXX-XXXX` or `GMLXXXXXXXXXXXX` form
+                amount_cents:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                  description: Amount in agorot to deduct from the card
+                order_id:
+                  type: string
+                  minLength: 1
+                  description: Order the redemption is being applied to
+              required:
+              - code
+              - amount_cents
+              - order_id
+              additionalProperties: false
+      responses:
+        '200':
+          description: Redemption recorded
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  redeemed_cents:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                    description: Amount in integer agorot (100 = ₪1)
+                  remaining_balance_cents:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                    description: Amount in integer agorot (100 = ₪1)
+                required:
+                - success
+                - redeemed_cents
+                - remaining_balance_cents
+                additionalProperties: false
+        '400':
+          description: Validation error or redemption refused
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '401':
+          description: Missing bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '403':
+          description: Read-only token or scope mismatch
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

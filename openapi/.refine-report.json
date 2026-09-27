@@ -1,0 +1,39 @@
+{
+  "provider": "makeup-land",
+  "sources": [
+    "_original/makeup-land-openapi.json",
+    "makeup-land-openapi.yml"
+  ],
+  "outputs": [
+    "makeup-land-brands-api-openapi.yml",
+    "makeup-land-cart-api-openapi.yml",
+    "makeup-land-customers-api-openapi.yml",
+    "makeup-land-gift-cards-api-openapi.yml",
+    "makeup-land-orders-api-openapi.yml",
+    "makeup-land-payment-links-api-openapi.yml",
+    "makeup-land-products-api-openapi.yml",
+    "makeup-land-proposals-api-openapi.yml",
+    "makeup-land-register-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/makeup-land-openapi.yml"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "makeup-land-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "makeup-land-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "tag 'Brands' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Cart' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Customers' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Gift Cards' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Orders' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Payment Links' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Products' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Proposals' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "tag 'Register' spans 2 source specs (makeup-land-openapi.json, makeup-land-openapi.yml): per-path servers applied",
+    "apis.yml register: written (+9 apis, 11 total)"
+  ],
+  "skipped": []
+}

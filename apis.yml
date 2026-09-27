@@ -1,5 +1,5 @@
 aid: makeup-land
-name: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+name: makeup.land
 description: >-
   makeup.land, operated by א. ט. הפקות בע״מ / A.T. Hafakot Ltd. (company no. 513942789, Zikhron Yaakov and
   Haifa, Israel), is a Hebrew-first professional cosmetics retailer carrying ~1,550 products from 34+ brands,
@@ -11,6 +11,22 @@ description: >-
   anonymous tools/list, Official MCP Registry land.makeup/v1), RFC 8414 and RFC 9728 OAuth metadata with a
   WorkOS-style auth.md, an A2A-shaped agent card, an ai-manifest and UCP merchant profile, llms.txt with
   markdown twins, and Google Merchant and OpenAI ACP product feeds.
+deliveryModel:
+  model: saas
+  license_evidence:
+    not_product:
+    - makeup-land/makeup-land-mcp
+  open_source: unknown
+  commercial: true
+  callable_host: true
+  label: Hosted service · you call their endpoint
+  confidence: low
+  source:
+  - openapi
+  - pricing
+  - repository-not-product
+  generated: '2026-09-25'
+  method: derived
 image: https://makeup.land/apple-icon.png
 url: https://raw.githubusercontent.com/api-evangelist/makeup-land/refs/heads/main/apis.yml
 x-type: company
@@ -34,8 +50,9 @@ tags:
 - Product Search
 - Agentic Commerce
 - MCP
-- agent-native
+- Agent-Native
 - Israel
+- A2A
 tags_raw:
 - Cosmetics
 - Beauty
@@ -49,93 +66,30 @@ tags_raw:
 - MCP
 - Agent-native
 - Israel
+- agent-native
+- A2A
 apis:
-- aid: makeup-land:makeup-land-v1-api
-  name: makeup.land V1 API
-  description: >-
-    REST API for the makeup.land storefront under https://makeup.land/api/v1 — 21 operations across
-    Products (cross-lingual q, exact Hebrew tag, brand, ΔE 2000 near_hex shade matching, hue_family, sort),
-    Brands, Customers (lookup, upsert, tags, M Club opportunities, best deals), Cart (get, add, patch,
-    delete, clear — all idempotent), Orders (read-only, six status axes), Gift Cards (public validate,
-    scoped redeem), Payment Links, Register (partner onboarding with webhook + WhatsApp dispatch) and
-    Proposals (catalog enrichment). Bearer ml_ tokens with scopes full / register / giftcards / proposals
-    and a read_only flag; phone (E.164) selects the customer on phone-keyed endpoints.
-  humanURL: https://makeup.land/llms-full.txt
-  baseURL: https://makeup.land/api/v1
-  tags:
-  - Cosmetics
-  - Product Search
-  - Shopping Cart
-  - Gift Cards
-  - Loyalty
-  - Order
-  tags_raw:
-  - Cosmetics
-  - Product Search
-  - Shopping Cart
-  - Gift Cards
-  - Loyalty
-  - Orders
-  properties:
-  - type: OpenAPI
-    url: openapi/makeup-land-openapi.yml
-  - type: OpenAPI
-    name: Provider-hosted OpenAPI 3.1 (JSON, canonical)
-    url: https://makeup.land/openapi.json
-  - type: OpenAPI
-    name: Provider-hosted OpenAPI 3.1 (YAML mirror)
-    url: https://makeup.land/openapi.yaml
-  - type: Documentation
-    url: https://makeup.land/llms-full.txt
-  - type: APIReference
-    url: https://makeup.land/openapi.json
-  - type: GettingStarted
-    url: https://makeup.land/llms-api.txt
-  - type: Authentication
-    url: authentication/makeup-land-authentication.yml
-  - type: Authentication
-    name: auth.md (provider agent-auth manifest)
-    url: https://makeup.land/auth.md
-  - type: OAuthScopes
-    url: scopes/makeup-land-scopes.yml
-  - type: Conventions
-    url: conventions/makeup-land-conventions.yml
-  - type: Idempotency
-    url: conventions/makeup-land-conventions.yml
-  - type: ErrorCatalog
-    url: errors/makeup-land-problem-types.yml
-  - type: RateLimits
-    url: rate-limits/makeup-land-rate-limits.yml
-  - type: Lifecycle
-    url: lifecycle/makeup-land-lifecycle.yml
-  - type: DataModel
-    url: data-model/makeup-land-data-model.yml
-  - type: Overlay
-    url: overlays/makeup-land-openapi-overlay.yaml
-  - type: Conformance
-    url: conformance/makeup-land-conformance.yml
-  - type: Webhooks
-    url: asyncapi/makeup-land-webhooks.yml
 - aid: makeup-land:makeup-land-mcp-server
   name: makeup.land MCP Server
   description: >-
     Remote Model Context Protocol server at https://makeup.land/api/mcp — Streamable HTTP, stateless,
-    protocol revision 2025-06-18. initialize and tools/list answer anonymously; 8 read-only tools
-    (list_products with ΔE shade matching, list_brands, validate_gift_card, get_customer, get_cart,
-    list_orders, list_payment_links, get_customer_best_deals). Catalog and gift-card tools work without
-    credentials; customer tools take the same ml_ bearer as the REST API plus an E.164 phone. Listed in the
-    Official MCP Registry as land.makeup/v1; the first-party GitHub repo holds server.json, smithery.yaml
-    and an integrator guide. The /.well-known/mcp.json manifest drifts from the live tool list.
+    protocol revision 2025-06-18. initialize and tools/list answer anonymously; 8 read-only tools (list_products
+    with ΔE shade matching, list_brands, validate_gift_card, get_customer, get_cart, list_orders, list_payment_links,
+    get_customer_best_deals). Catalog and gift-card tools work without credentials; customer tools take
+    the same ml_ bearer as the REST API plus an E.164 phone. Listed in the Official MCP Registry as land.makeup/v1;
+    the first-party GitHub repo holds server.json, smithery.yaml and an integrator guide. The /.well-known/mcp.json
+    manifest drifts from the live tool list.
   humanURL: https://github.com/makeup-land/makeup-land-mcp
   baseURL: https://makeup.land/api/mcp
   tags:
   - MCP
-  - agent-native
+  - Agent-Native
   - Cosmetics
   tags_raw:
   - MCP
   - Agent-native
   - Cosmetics
+  - agent-native
   properties:
   - type: MCPServer
     url: mcp/makeup-land-mcp.yml
@@ -154,8 +108,8 @@ apis:
 - aid: makeup-land:makeup-land-merchant-feeds
   name: makeup.land Merchant & Agentic Commerce Feeds
   description: >-
-    Public, token-free catalog feeds under https://makeup.land/api/merchant — a Google Merchant Center RSS
-    2.0 product feed (/feed), a Google Product Reviews 2.4 feed (/reviews) and an OpenAI Agentic Commerce
+    Public, token-free catalog feeds under https://makeup.land/api/merchant — a Google Merchant Center
+    RSS 2.0 product feed (/feed), a Google Product Reviews 2.4 feed (/reviews) and an OpenAI Agentic Commerce
     Protocol JSON Lines product feed (/openai/products; credits-only variants omitted because ChatGPT
     checkout pays in fiat). Declared in llms.txt, pricing.md, the ai-manifest and the UCP merchant profile.
   humanURL: https://makeup.land/llms.txt
@@ -173,6 +127,348 @@ apis:
     url: https://makeup.land/llms.txt
   - type: Conformance
     url: conformance/makeup-land-conformance.yml
+- aid: makeup-land:makeup-land-brands-api
+  name: makeup.land Brands API
+  description: Brand directory
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Brands
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-brands-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-cart-api
+  name: makeup.land Cart API
+  description: Phone-keyed cart read/write (ILS + ℳ-credits)
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Cart
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-cart-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-customers-api
+  name: makeup.land Customers API
+  description: Customer CRUD + tags + opportunities + best deals
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Customers
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-customers-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-gift-cards-api
+  name: makeup.land Gift Cards API
+  description: Recipient cards, validation, redemption
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Gift Cards
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-gift-cards-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-orders-api
+  name: makeup.land Orders API
+  description: Customer order history
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Orders
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-orders-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-payment-links-api
+  name: makeup.land Payment Links API
+  description: Outstanding payment requests
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Payment Links
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-payment-links-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-products-api
+  name: makeup.land Products API
+  description: Catalog browsing + semantic search
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Products
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-products-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-proposals-api
+  name: makeup.land Proposals API
+  description: Catalog enrichment proposal intake
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Proposals
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-proposals-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
+- aid: makeup-land:makeup-land-register-api
+  name: makeup.land Register API
+  description: External registration intake + audit
+  humanURL: https://makeup.land/llms-full.txt
+  baseURL: https://makeup.land/api/v1
+  tags:
+  - Register
+  properties:
+  - type: OpenAPI
+    url: openapi/makeup-land-register-api-openapi.yml
+  - type: Documentation
+    url: https://makeup.land/llms-full.txt
+  - type: APIReference
+    url: https://makeup.land/openapi.json
+  - type: GettingStarted
+    url: https://makeup.land/llms-api.txt
+  - type: Authentication
+    url: authentication/makeup-land-authentication.yml
+  - type: Authentication
+    url: https://makeup.land/auth.md
+  - type: OAuthScopes
+    url: scopes/makeup-land-scopes.yml
+  - type: Conventions
+    url: conventions/makeup-land-conventions.yml
+  - type: Idempotency
+    url: conventions/makeup-land-conventions.yml
+  - type: ErrorCatalog
+    url: errors/makeup-land-problem-types.yml
+  - type: RateLimits
+    url: rate-limits/makeup-land-rate-limits.yml
+  - type: Lifecycle
+    url: lifecycle/makeup-land-lifecycle.yml
+  - type: DataModel
+    url: data-model/makeup-land-data-model.yml
+  - type: Conformance
+    url: conformance/makeup-land-conformance.yml
+  - type: Webhooks
+    url: asyncapi/makeup-land-webhooks.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com

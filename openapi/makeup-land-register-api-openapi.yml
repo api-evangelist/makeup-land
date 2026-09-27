@@ -1,0 +1,969 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Register API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Register across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Register
+  description: External registration intake + audit
+paths:
+  /api/v1/register:
+    post:
+      operationId: registerCustomer
+      summary: Trusted customer registration intake (WA-inbound + partner)
+      description: Designed to be invoked by `wa.makeup.land` on every inbound WhatsApp contact (WA delivery proves phone ownership) or by partner systems with a `register`-scoped token. Orchestrates customer create/update, tag merge, webhook dispatch, WhatsApp template, and on first insert materialises M-Club static opportunities. WA template + webhooks fire only when `created === true`. Returns 201 on create, 200 on update.
+      tags:
+      - Register
+      security:
+      - bearerAuth:
+        - full
+        - register
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: 'Optional client-generated idempotency token (recommended: UUIDv4). Retries with the same key within 24h replay the original response.'
+          type: string
+          minLength: 1
+          maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                phone:
+                  type: string
+                  pattern: ^\+\d{6,15}$
+                  description: Phone number in E.164 format, e.g. +972501234567
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                  pattern: ^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+                tag:
+                  description: Convenience single-tag shortcut. Merged with `tags` if both supplied.
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                team:
+                  description: '`yes` marks the customer as part of the team. Off by default.'
+                  type: string
+                  enum:
+                  - 'yes'
+                profile_pic_url:
+                  description: Avatar source URL. Must be HTTPS and resolve to an allowlisted host (`*.whatsapp.net`, `*.fbcdn.net`). SSRF-guarded.
+                  type: string
+                  format: uri
+                referred_by_code:
+                  description: Referral code — written once on insert, never updated.
+                  type: string
+                referral_source:
+                  type: string
+              required:
+              - phone
+              additionalProperties: false
+      responses:
+        '200':
+          description: Existing customer updated
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: ok
+                  customer:
+                    type: object
+                    properties: {}
+                    additionalProperties: {}
+                  created:
+                    type: boolean
+                  webhook:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - sent
+                        - skipped
+                        - failed
+                        - disabled
+                      status_code:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      attempts:
+                        type: integer
+                        exclusiveMinimum: 0
+                        maximum: 9007199254740991
+                      error:
+                        type: string
+                    required:
+                    - status
+                    additionalProperties: false
+                  whatsapp:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - sent
+                        - skipped
+                        - failed
+                        - disabled
+                      template:
+                        type: string
+                      error:
+                        type: string
+                    required:
+                    - status
+                    additionalProperties: false
+                  tags_added:
+                    type: array
+                    items:
+                      type: string
+                  tags_already_present:
+                    type: array
+                    items:
+                      type: string
+                required:
+                - status
+                - customer
+                - created
+                - webhook
+                - whatsapp
+                additionalProperties: false
+        '201':
+          description: New customer created
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: ok
+                  customer:
+                    type: object
+                    properties: {}
+                    additionalProperties: {}
+                  created:
+                    type: boolean
+                  webhook:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - sent
+                        - skipped
+                        - failed
+                        - disabled
+                      status_code:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      attempts:
+                        type: integer
+                        exclusiveMinimum: 0
+                        maximum: 9007199254740991
+                      error:
+                        type: string
+                    required:
+                    - status
+                    additionalProperties: false
+                  whatsapp:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - sent
+                        - skipped
+                        - failed
+                        - disabled
+                      template:
+                        type: string
+                      error:
+                        type: string
+                    required:
+                    - status
+                    additionalProperties: false
+                  tags_added:
+                    type: array
+                    items:
+                      type: string
+                  tags_already_present:
+                    type: array
+                    items:
+                      type: string
+                required:
+                - status
+                - customer
+                - created
+                - webhook
+                - whatsapp
+                additionalProperties: false
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '401':
+          description: Missing bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '403':
+          description: Read-only token, scope mismatch, or no `registration_source` configured for the token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '409':
+          description: Phone conflict
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+      x-rate-limit:
+        max: 60
+        windowSeconds: 60
+        keyedOn: token-id
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/registrations:
+    get:
+      operationId: listRegistrations
+      summary: Paginated registration audit log
+      description: Register-scoped tokens see only registrations belonging to the token's `registration_source`. Full-scope tokens see everything.
+      tags:
+      - Register
+      security:
+      - bearerAuth:
+        - full
+        - register
+      parameters:
+      - name: phone
+        in: query
+        required: false
+        description: Phone number in E.164 format, e.g. +972501234567
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+          pattern: ^\+\d{6,15}$
+          description: Phone number in E.164 format, e.g. +972501234567
+      - name: status
+        in: query
+        required: false
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+      - name: tag
+        in: query
+        required: false
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: string
+      - name: from
+        in: query
+        required: false
+        description: Inclusive lower bound on registered_at
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Inclusive lower bound on registered_at
+          type: string
+      - name: to
+        in: query
+        required: false
+        description: Exclusive upper bound on registered_at
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Exclusive upper bound on registered_at
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: page
+        in: query
+        required: false
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      responses:
+        '200':
+          description: Registration audit page
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  registrations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          exclusiveMinimum: 0
+                          maximum: 9007199254740991
+                        phone:
+                          type: string
+                        name:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        email:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        status:
+                          type: string
+                        created:
+                          type: boolean
+                        customer_id:
+                          type: string
+                          minLength: 1
+                        webhook_status:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        whatsapp_status:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        registered_at:
+                          type: string
+                          description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                      required:
+                      - id
+                      - phone
+                      - name
+                      - email
+                      - tags
+                      - status
+                      - created
+                      - customer_id
+                      - webhook_status
+                      - whatsapp_status
+                      - registered_at
+                      additionalProperties: false
+                  total:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  page:
+                    type: integer
+                    exclusiveMinimum: 0
+                    maximum: 9007199254740991
+                  has_more:
+                    type: boolean
+                required:
+                - registrations
+                - total
+                - page
+                - has_more
+                additionalProperties: false
+        '401':
+          description: Missing bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+  /api/v1/registrations/{id}:
+    get:
+      operationId: getRegistration
+      summary: Single registration with full webhook + WhatsApp audit
+      tags:
+      - Register
+      security:
+      - bearerAuth:
+        - full
+        - register
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 9007199254740991
+      responses:
+        '200':
+          description: Registration row
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  registration:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        exclusiveMinimum: 0
+                        maximum: 9007199254740991
+                      phone:
+                        type: string
+                      name:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      email:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      tags:
+                        type: array
+                        items:
+                          type: string
+                      status:
+                        type: string
+                      created:
+                        type: boolean
+                      customer_id:
+                        type: string
+                        minLength: 1
+                      webhook_status:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      whatsapp_status:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      registered_at:
+                        type: string
+                        description: ISO-8601 timestamp, e.g. 2026-05-23T12:34:56.789Z
+                      webhook:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          url:
+                            anyOf:
+                            - type: string
+                              format: uri
+                            - type: 'null'
+                          status_code:
+                            anyOf:
+                            - type: integer
+                              minimum: -9007199254740991
+                              maximum: 9007199254740991
+                            - type: 'null'
+                          attempts:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                        required:
+                        - status
+                        - url
+                        - status_code
+                        - attempts
+                        additionalProperties: false
+                      whatsapp:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          template:
+                            anyOf:
+                            - type: string
+                            - type: 'null'
+                        required:
+                        - status
+                        - template
+                        additionalProperties: false
+                    required:
+                    - id
+                    - phone
+                    - name
+                    - email
+                    - tags
+                    - status
+                    - created
+                    - customer_id
+                    - webhook_status
+                    - whatsapp_status
+                    - registered_at
+                    - webhook
+                    - whatsapp
+                    additionalProperties: false
+                required:
+                - registration
+                additionalProperties: false
+        '401':
+          description: Missing bearer token
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '404':
+          description: Not found, or scoped token does not own this registration
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

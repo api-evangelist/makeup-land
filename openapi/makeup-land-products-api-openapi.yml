@@ -1,0 +1,645 @@
+openapi: 3.2.0
+info:
+  title: Makeup Land Products API
+  version: 1.0.0
+  contact:
+    name: makeup.land
+    url: https://makeup.land
+  license:
+    name: Proprietary
+    url: https://makeup.land/terms-of-service
+  description: 'Operations tagged Products across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://makeup.land
+  description: Production
+tags:
+- name: Products
+  description: Catalog browsing + semantic search
+paths:
+  /api/v1/products:
+    get:
+      operationId: listProducts
+      summary: Browse / search the catalog
+      description: 'The primary catalog endpoint. Supports full-text + semantic search, brand/tag filtering, ΔE-ranked shade matching, per-customer reward projection, and dual-tender pricing (ILS + ℳ-credits).
+
+
+        **Auth tiers**
+
+        - Tag-only or no-arg listing: bearer token optional.
+
+        - `q` / `phone` / `include=inventory` / `relevant_to_phone`: full-scope bearer token required.
+
+
+        **Precedence**: `near_hex` ranking dominates `sort`; `sort` dominates the implicit relevance ranking.'
+      tags:
+      - Products
+      security:
+      - bearerAuth:
+        - full
+      - {}
+      parameters:
+      - name: q
+        in: query
+        required: false
+        description: Free-text query. Triggers semantic + lexical search (union, rerank). Requires a bearer token when supplied without `tag`.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Free-text query. Triggers semantic + lexical search (union, rerank). Requires a bearer token when supplied without `tag`.
+          type: string
+      - name: tag
+        in: query
+        required: false
+        description: EXACT tag-string filter (no translation, no substring). Matching is case-insensitive and whitespace-trimmed — `PRO+` and `pro+` are the same tag; tags come back lowercase. Catalog tags are Hebrew (e.g. שפתון, ביוטי, עיניים, שפתיים). For natural-language category lookup use `q`, which routes through semantic search.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: EXACT tag-string filter (no translation, no substring). Matching is case-insensitive and whitespace-trimmed — `PRO+` and `pro+` are the same tag; tags come back lowercase. Catalog tags are Hebrew (e.g. שפתון, ביוטי, עיניים, שפתיים). For natural-language category lookup use `q`, which routes through semantic search.
+          type: string
+      - name: brand
+        in: query
+        required: false
+        description: Brand identifier. Matches name / slug / Hebrew name with whitespace and punctuation normalised — `Bali Body`, `balibody`, `bali-body` all collapse.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Brand identifier. Matches name / slug / Hebrew name with whitespace and punctuation normalised — `Bali Body`, `balibody`, `bali-body` all collapse.
+          type: string
+      - name: phone
+        in: query
+        required: false
+        description: When supplied, the response embeds the customer's reward projection (`reward_earned` per product). Requires full-scope bearer token.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: When supplied, the response embeds the customer's reward projection (`reward_earned` per product). Requires full-scope bearer token.
+          type: string
+          pattern: ^\+\d{6,15}$
+      - name: in_stock
+        in: query
+        required: false
+        description: String boolean. `true` filters to in-stock variants only.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: String boolean. `true` filters to in-stock variants only.
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+      - name: max_price
+        in: query
+        required: false
+        description: Max ILS price filter (decimal, e.g. `99.99`)
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Max ILS price filter (decimal, e.g. `99.99`)
+          type: number
+          minimum: 0
+      - name: max_credit_cents
+        in: query
+        required: false
+        description: Max ℳ-credit price filter in agorot
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Max ℳ-credit price filter in agorot
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      - name: relevant_to_phone
+        in: query
+        required: false
+        description: Re-rank results by relevance to this customer's past orders + tags. Requires full-scope bearer token.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Re-rank results by relevance to this customer's past orders + tags. Requires full-scope bearer token.
+          type: string
+          pattern: ^\+\d{6,15}$
+      - name: include
+        in: query
+        required: false
+        description: Comma-separated extra-field bundles. `inventory` adds `stock_by_location` and per-variant `available`. Requires full scope.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Comma-separated extra-field bundles. `inventory` adds `stock_by_location` and per-variant `available`. Requires full scope.
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: Default 10. Capped at 50.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Default 10. Capped at 50.
+          type: integer
+          minimum: 1
+          maximum: 50
+      - name: page
+        in: query
+        required: false
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      - name: near_hex
+        in: query
+        required: false
+        description: Single `#RRGGBB` hex or comma-separated list (≤8). Returns products ranked by ΔE distance to the closest match.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Single `#RRGGBB` hex or comma-separated list (≤8). Returns products ranked by ΔE distance to the closest match.
+          type: string
+      - name: delta_e_max
+        in: query
+        required: false
+        description: ΔE2000 cutoff used with `near_hex`. Default 80 single-hex, 200 multi-hex.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: ΔE2000 cutoff used with `near_hex`. Default 80 single-hex, 200 multi-hex.
+          type: number
+          minimum: 0
+      - name: hue_family
+        in: query
+        required: false
+        description: Comma-separated hue families. Post-filter — narrows results to products whose swatches fall in any of the listed families.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Comma-separated hue families. Post-filter — narrows results to products whose swatches fall in any of the listed families.
+          type: string
+      - name: sort
+        in: query
+        required: false
+        description: Default `relevance`. `rating` uses a Bayesian shrinkage to avoid single-review products winning.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: Default `relevance`. `rating` uses a Bayesian shrinkage to avoid single-review products winning.
+          type: string
+          enum:
+          - price_asc
+          - price_desc
+          - popularity
+          - rating
+          - relevance
+      - name: coverage
+        in: query
+        required: false
+        description: How multi-value filters (tags, hue_family) combine. `all` (default) intersects; `any` unions.
+        schema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          description: How multi-value filters (tags, hue_family) combine. `all` (default) intersects; `any` unions.
+          type: string
+          enum:
+          - all
+          - any
+      responses:
+        '200':
+          description: Paginated catalog page
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: string
+                          minLength: 1
+                        title:
+                          type: string
+                        handle:
+                          type: string
+                          description: URL-safe slug
+                        url:
+                          type: string
+                          format: uri
+                        image_url:
+                          anyOf:
+                          - type: string
+                            format: uri
+                          - type: 'null'
+                        images:
+                          type: array
+                          items:
+                            type: string
+                            format: uri
+                        price:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        compare_at_price:
+                          anyOf:
+                          - type: number
+                            minimum: 0
+                            description: Amount in ILS as a decimal number (e.g. 12.50)
+                          - type: 'null'
+                        credit_price:
+                          anyOf:
+                          - type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                            description: Amount in integer agorot (100 = ₪1)
+                          - type: 'null'
+                        min_price:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        max_price:
+                          type: number
+                          minimum: 0
+                          description: Amount in ILS as a decimal number (e.g. 12.50)
+                        brand:
+                          anyOf:
+                          - type: object
+                            properties:
+                              slug:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              name:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                            additionalProperties: false
+                          - type: 'null'
+                        product_type:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        in_stock:
+                          type: boolean
+                        description:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        variants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              variant_id:
+                                type: string
+                                minLength: 1
+                              title:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                              price:
+                                type: number
+                                minimum: 0
+                                description: Amount in ILS as a decimal number (e.g. 12.50)
+                              compare_at_price:
+                                anyOf:
+                                - type: number
+                                  minimum: 0
+                                  description: Amount in ILS as a decimal number (e.g. 12.50)
+                                - type: 'null'
+                              credit_price:
+                                anyOf:
+                                - type: integer
+                                  minimum: 0
+                                  maximum: 9007199254740991
+                                  description: Amount in integer agorot (100 = ₪1)
+                                - type: 'null'
+                                description: ℳ-credit price in agorot. `null` for ILS-only variants.
+                              in_stock:
+                                type: boolean
+                              image_url:
+                                anyOf:
+                                - type: string
+                                  format: uri
+                                - type: 'null'
+                              swatch:
+                                type: object
+                                properties:
+                                  hex:
+                                    type: string
+                                    pattern: ^#[0-9a-fA-F]{6}$
+                                    description: Swatch color
+                                  variant_id:
+                                    anyOf:
+                                    - type: string
+                                      minLength: 1
+                                    - type: 'null'
+                                  option_handle:
+                                    anyOf:
+                                    - type: string
+                                    - type: 'null'
+                                required:
+                                - hex
+                                - variant_id
+                                - option_handle
+                                additionalProperties: false
+                              inventory_policy:
+                                type: string
+                                enum:
+                                - deny
+                                - continue
+                              available:
+                                type: integer
+                                minimum: -9007199254740991
+                                maximum: 9007199254740991
+                              stock_by_location:
+                                type: object
+                                propertyNames:
+                                  type: string
+                                additionalProperties:
+                                  type: integer
+                                  minimum: 0
+                                  maximum: 9007199254740991
+                                description: Optional per-location stock breakdown when `include=inventory`
+                            required:
+                            - variant_id
+                            - title
+                            - price
+                            - compare_at_price
+                            - credit_price
+                            - in_stock
+                            - image_url
+                            additionalProperties: false
+                        swatches:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              hex:
+                                type: string
+                                pattern: ^#[0-9a-fA-F]{6}$
+                                description: Swatch color
+                              variant_id:
+                                anyOf:
+                                - type: string
+                                  minLength: 1
+                                - type: 'null'
+                              option_handle:
+                                anyOf:
+                                - type: string
+                                - type: 'null'
+                            required:
+                            - hex
+                            - variant_id
+                            - option_handle
+                            additionalProperties: false
+                        average_rating:
+                          anyOf:
+                          - type: number
+                            minimum: 0
+                            maximum: 5
+                          - type: 'null'
+                        total_reviews:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        shade_match:
+                          description: Present only when `near_hex` was supplied (single-hex form). Identifies the closest variant swatch on this product and its ΔE distance. Field name matches the `shade_match` agent-card skill so LLMs can predict the response shape from the skill catalog.
+                          type: object
+                          properties:
+                            hex:
+                              type: string
+                              pattern: ^#[0-9a-fA-F]{6}$
+                              description: The closest variant swatch's hex
+                            delta_e:
+                              type: number
+                              minimum: 0
+                              description: Perceptual distance (ΔE2000, 2dp) between `near_hex` and the matched swatch. Lower = closer.
+                          required:
+                          - hex
+                          - delta_e
+                          additionalProperties: false
+                        reward_earned:
+                          description: Per-customer projected reward in agorot. Present when `phone` supplied.
+                          anyOf:
+                          - type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                            description: Amount in integer agorot (100 = ₪1)
+                          - type: 'null'
+                        inventory_policy:
+                          type: string
+                          enum:
+                          - deny
+                          - continue
+                        track_quantity:
+                          type: boolean
+                        stock_by_location:
+                          type: object
+                          propertyNames:
+                            type: string
+                          additionalProperties:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                          description: Optional per-location stock breakdown when `include=inventory`
+                      required:
+                      - product_id
+                      - title
+                      - handle
+                      - url
+                      - image_url
+                      - images
+                      - price
+                      - compare_at_price
+                      - credit_price
+                      - min_price
+                      - max_price
+                      - brand
+                      - product_type
+                      - in_stock
+                      - description
+                      - tags
+                      - variants
+                      - swatches
+                      - average_rating
+                      - total_reviews
+                      additionalProperties: false
+                  total:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  page:
+                    type: integer
+                    exclusiveMinimum: 0
+                    maximum: 9007199254740991
+                  has_more:
+                    type: boolean
+                  partial:
+                    type: boolean
+                    description: True when post-filters (`hue_family`, etc.) underfilled the page — the catalog page below this one may contain more matches.
+                  customer:
+                    description: Echoed back when the `phone` param resolved to a customer.
+                    type: object
+                    properties:
+                      name:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      tags:
+                        type: array
+                        items:
+                          type: string
+                      credit_balance:
+                        type: integer
+                        minimum: 0
+                        maximum: 9007199254740991
+                        description: Amount in integer agorot (100 = ₪1)
+                      credit_balance_formatted:
+                        type: string
+                    required:
+                    - name
+                    - tags
+                    - credit_balance
+                    - credit_balance_formatted
+                    additionalProperties: false
+                required:
+                - products
+                - total
+                - page
+                - has_more
+                - partial
+                additionalProperties: false
+        '400':
+          description: Invalid hex, missing required filter, or invalid parameter
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '401':
+          description: Auth required for the requested fields but not supplied
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $schema: https://json-schema.org/draft/2020-12/schema
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Human-readable error message (en or he, copy may shift)
+                  error_code:
+                    description: Stable machine-readable code. Optional today (legacy callers depend on the `error` string field); will become required in the next API version.
+                    type: string
+                    enum:
+                    - invalid_json
+                    - invalid_quantity
+                    - invalid_phone
+                    - invalid_parameter
+                    - product_unavailable
+                    - variant_mismatch
+                    - tender_unavailable
+                    - customer_not_found
+                    - line_item_not_found
+                    - registration_not_found
+                    - insufficient_stock
+                    - insufficient_credits
+                    - line_collision
+                    - phone_conflict
+                    - validation_failed
+                    - scope_mismatch
+                    - read_only_token
+                    - rate_limited
+                    - unauthorized
+                    - internal_error
+                    - endpoint_not_found
+                required:
+                - error
+                additionalProperties: {}
+                description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
+    servers:
+    - url: https://makeup.land
+      description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ml_<hex24>
+      description: API bearer token issued under `api_tokens`. Prefix `ml_` is required. Per-token scope and `read_only` flag govern endpoint + write access.
+    phoneIdentifier:
+      type: apiKey
+      in: query
+      name: phone
+      description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
+x-refined-from:
+- makeup-land-openapi.json
+- makeup-land-openapi.yml
+x-scopes:
+  full: Full read + write access. Default scope for first-party tokens.
+  register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
+  giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
+  proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
+  read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.

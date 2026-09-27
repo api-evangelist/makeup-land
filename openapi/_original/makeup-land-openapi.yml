@@ -1,3 +1,5 @@
+# x-archived-from: makeup-land-openapi.yml
+# x-archived-on: 2026-09-26
 # makeup.land API — OpenAPI 3.1.0
 # Harvested VERBATIM from https://makeup.land/openapi.json on 2026-09-19 (HTTP 200, application/json, 149,073 bytes)
 # and re-serialized to YAML without any content change. The byte-for-byte original is openapi/_original/makeup-land-openapi.json.
