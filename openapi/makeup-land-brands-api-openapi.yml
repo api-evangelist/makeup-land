@@ -1,14 +1,15 @@
 openapi: 3.2.0
 info:
-  title: Makeup Land Brands API
+  title: makeup.land Brands API
   version: 1.0.0
+  summary: REST API for makeup.land — Hebrew-RTL professional cosmetics storefront with bilingual product data, ILS + ℳ-credit dual-tender pricing, and agent-friendly endpoints.
+  description: All endpoints live under `/api/v1/`.
   contact:
     name: makeup.land
     url: https://makeup.land
   license:
     name: Proprietary
     url: https://makeup.land/terms-of-service
-  description: 'Operations tagged Brands across 2 of this provider''s published API definitions: makeup-land-openapi.json, makeup-land-openapi.yml. Each path carries the servers of the definition it was published in.'
 servers:
 - url: https://makeup.land
   description: Production
@@ -150,9 +151,6 @@ paths:
                 - error
                 additionalProperties: {}
                 description: Standard V1 error envelope. Additional fields may be present (e.g. `available_cents`, `requested_cents` on 409 insufficient_credits, `row_errors` on 422 validation failures).
-    servers:
-    - url: https://makeup.land
-      description: Production
 components:
   securitySchemes:
     bearerAuth:
@@ -165,9 +163,6 @@ components:
       in: query
       name: phone
       description: Phone number in E.164 format (e.g. `+972501234567`) that selects which customer's resources to return. **NOT a credential** — endpoints that accept this also REQUIRE `bearerAuth`. The bearer authenticates the calling partner; the phone selects the customer. For POST/PATCH cart-mutation endpoints, the phone goes in the JSON body instead of the query string.
-x-refined-from:
-- makeup-land-openapi.json
-- makeup-land-openapi.yml
 x-scopes:
   full: Full read + write access. Default scope for first-party tokens.
   register: Issue new customer registrations and read registrations belonging to the token's `registration_source`. Restricted to the `/register` and `/registrations` endpoints.
