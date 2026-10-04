@@ -285,6 +285,8 @@ apis:
   humanURL: https://makeup.land/llms-full.txt
   baseURL: https://makeup.land/api/v1
   tags:
+  - Order
+  tags_raw:
   - Orders
   properties:
   - type: OpenAPI
@@ -361,6 +363,8 @@ apis:
   humanURL: https://makeup.land/llms-full.txt
   baseURL: https://makeup.land/api/v1
   tags:
+  - Product
+  tags_raw:
   - Products
   properties:
   - type: OpenAPI
@@ -475,6 +479,9 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: CapabilityMap
+  url: capabilities/makeup-land-capability-edges.yml
+  name: makeup.land Business Capability Map
 - type: Website
   url: https://makeup.land/
 - type: Documentation
