@@ -1,0 +1,12 @@
+{
+ "url": "https://makeup.land/openapi.json",
+ "requested_url": "https://makeup.land/openapi.json",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8",
+ "bytes": 149073,
+ "sha256": "44c327f8d0596abef8f56357f0b3b98f2acc3261a1a549e1cbd0fad443dbe865",
+ "fetched_at": "2026-10-04",
+ "fetched_by": "APIEvangelist-Harvest/1.0 (+https://apievangelist.com)",
+ "match": "byte-identical",
+ "note": "Re-fetched from the provider by verify-openapi-sources.py; the archived file is byte-identical to what the provider serves."
+}
