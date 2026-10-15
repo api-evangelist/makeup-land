@@ -6,6 +6,7 @@ source:
 - https://composio.dev/toolkits/makeup-land
 - https://monid.ai/tools/makeup-land
 checked:
+- https://a2aregistry.org/api/agents
 - https://composio.dev/toolkits/makeup-land
 - https://monid.ai/tools/makeup-land
 - https://n8n.io/integrations/makeup-land/
@@ -29,7 +30,7 @@ edges:
     registered_name: land.makeup/v1
     register_id: land.makeup/v1
     detected_by: sweep-agent-tools.py
-    detected: '2026-10-14'
+    detected: '2026-10-15'
   mcp_registry:
     servers:
     - land.makeup/v1
@@ -45,4 +46,73 @@ edges:
   - namespace-domain
   detected_by: sweep-agent-tools.py
   first_seen: '2026-10-14'
+- partner_name: A2A protocol (own Agent Card)
+  partner: null
+  partner_match: register
+  type: register
+  direction: provider-built
+  category: A2A agent
+  evidence: https://makeup.land/.well-known/agent-card.json
+  channel: provider-built
+  relationship: compatible
+  shape: a2a
+  evidence_kind: own-wellknown
+  degree: flavored
+  report_only: true
+  a2a_card:
+    grade: flavored
+    verdict: flavored
+    protocol_version: null
+    deviations:
+    - no-protocolVersion
+    card_subject: api
+  contract_reference:
+    register: provider's own /.well-known/agent-card.json
+    spec_file: null
+    standard: A2A
+    role: a2a-agent-card
+    registered_name: makeup.land
+    organization: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+    matched_domain: makeup.land
+    matched_by: own-domain
+    detected_by: sweep-ai-agents.py
+    detected: '2026-10-15'
+  detected_by: sweep-ai-agents.py
+  first_seen: '2026-10-15'
+- partner_name: a2aregistry.org
+  partner: null
+  partner_match: register
+  type: register
+  direction: partner-built
+  category: A2A agent registry
+  evidence: https://a2aregistry.org/api/agents/9b6f62de-5ad6-41eb-9f79-7fa4f17d6b69
+  channel: standard-directory
+  relationship: compatible
+  shape: a2a
+  evidence_kind: register-listing
+  degree: listed
+  report_only: true
+  a2a_register:
+    hosts:
+    - makeup.land
+    conformance: true
+    task_conformance_working: false
+    healthy: true
+    signal_note: booleans over the provider's hosts; listings are context, never read
+  contract_reference:
+    register: a2aregistry.org /api/agents
+    spec_file: null
+    standard: A2A
+    role: a2a-registry-listing
+    registered_name: א. ט. הפקות בע״מ / A.T. Hafakot Ltd.
+    matched_domain: makeup.land
+    matched_by: domain
+    matched_via: card-host
+    listings_context: 1
+    sample_agents:
+    - makeup.land
+    detected_by: sweep-ai-agents.py
+    detected: '2026-10-15'
+  detected_by: sweep-ai-agents.py
+  first_seen: '2026-10-15'
 templates: []
