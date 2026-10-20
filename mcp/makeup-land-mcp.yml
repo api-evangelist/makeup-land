@@ -44,53 +44,53 @@ tools_file: mcp/makeup-land-mcp-tools.json
 tool_count: 8
 tools:
 - name: list_products
+  description: Browse the catalog with tag, brand, near_hex (color-distance shade match), hue_family,
+    and sort filters. Bearer becomes required when passing `phone` (rewards projection).
   title: List / search products
   auth: anonymous for q / tag / brand / near_hex / hue_family / sort; bearer required when phone is passed
   rest_operation: listProducts
   input_schema: q, tag, brand, near_hex (^#?[0-9A-Fa-f]{6}$), hue_family (enum), sort (enum), limit (1-50),
     page, phone (^\+\d{6,15}$)
   execution: taskSupport forbidden
-  description: Browse the catalog with tag, brand, near_hex (ΔE shade match), hue_family, and sort filters.
-    Bearer becomes required when passing `phone` (rewards projection).
 - name: list_brands
+  description: Return every brand with product counts and slugs. Bearer required.
   title: List all brands
   auth: bearer
   rest_operation: listBrands
-  description: Return every brand with product counts and slugs. Bearer required.
 - name: validate_gift_card
+  description: Check a gift card's remaining balance using its code. Public endpoint — no bearer required
+    (gated on knowledge of the code).
   title: Validate a gift card code
   auth: public (gated on knowledge of the code)
   rest_operation: validateGiftCard
-  description: Check a gift card's remaining balance using its code. Public endpoint — no bearer required
-    (gated on knowledge of the code).
 - name: get_customer
+  description: Return tags, ℳ-credit balance, M Club tier for the customer with the given E.164 phone.
+    Bearer required.
   title: Lookup customer by phone
   auth: bearer
   rest_operation: getCustomer
-  description: Return tags, ℳ-credit balance, M Club tier for the customer with the given E.164 phone.
-    Bearer required.
 - name: get_cart
+  description: Return the customer's most-recently-updated cart with per-line and total reward projection.
+    Bearer + phone required.
   title: Fetch a customer's cart
   auth: bearer + phone
   rest_operation: getCart
-  description: Return the customer's most-recently-updated cart with per-line and total reward projection.
-    Bearer + phone required.
 - name: list_orders
+  description: Recent orders with 6-axis status (order / payment / fulfillment / delivery / return / review).
+    Bearer + phone required.
   title: List a customer's orders
   auth: bearer + phone
   rest_operation: listOrders
-  description: Recent orders with 6-axis status (order / payment / fulfillment / delivery / return / review).
-    Bearer + phone required.
 - name: list_payment_links
+  description: Pending payment_requests on the customer's unpaid orders. Bearer + phone required.
   title: List pending payment links
   auth: bearer + phone
   rest_operation: listPaymentLinks
-  description: Pending payment_requests on the customer's unpaid orders. Bearer + phone required.
 - name: get_customer_best_deals
+  description: Top deal projections based on the customer's tags + M Club tier. Bearer + phone required.
   title: Personalised best deals for a customer
   auth: bearer + phone
   rest_operation: getCustomerBestDeals
-  description: Top deal projections based on the customer's tags + M Club tier. Bearer + phone required.
 manifest_drift:
   manifest: well-known/makeup-land-mcp.json
   note: 'The /.well-known/mcp.json manifest lists 8 tools under REST-style camelCase names (listProducts,
@@ -176,3 +176,4 @@ tool_quality:
   scored: false
   note: Facts from the saved tools/list capture (mcp_tool_quality.py); recorded, not scored. Checks learned
     from Glimind's agent-readiness audit.
+tools_count: 8
