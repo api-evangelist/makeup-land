@@ -949,3 +949,9 @@ x-scopes:
   giftcards: Redeem gift cards. Required only by `POST /gift-cards/redeem`. The public `/gift-cards/validate` endpoint requires no token.
   proposals: Submit catalog enrichment proposals to `/proposals`. Read-only against the rest of the catalog.
   read_only: Marker for tokens whose `read_only=true` flag rejects every write. Not negotiated at request time — set at token issuance.
+x-provenance:
+  method: harvested
+  publisher: makeup.land
+  source: https://makeup.land/openapi.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
